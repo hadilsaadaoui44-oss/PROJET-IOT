@@ -1,0 +1,449 @@
+{% extends "analyzer/base.html" %}
+
+{% block title %}
+    Rapport - {{ project.name }}
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-2">
+    📊 Bilan Energetique
+</h2>
+<h4 class="text-muted mb-4">
+    {{ project.name }} — 📍
+    {{ project.location_city }},
+    {{ project.location_country }}
+</h4>
+
+{% if result %}
+
+<!-- ======================== -->
+<!-- BLOC 1 : Resume global  -->
+<!-- ======================== -->
+{% if result.summary %}
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">
+            1️⃣ Resume Global
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <table class="table table-sm">
+                    <tr>
+                        <td>Courant moyen</td>
+                        <td class="fw-bold">
+                            {{ result.summary.avg_current_ma }} mA
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Courant min</td>
+                        <td class="text-success fw-bold">
+                            {{ result.summary.min_current_ma }} mA
+                            <small class="text-muted">
+                                ({{ result.summary.min_current_mode }})
+                            </small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Courant max</td>
+                        <td class="text-danger fw-bold">
+                            {{ result.summary.max_current_ma }} mA
+                            <small class="text-muted">
+                                ({{ result.summary.max_current_mode }})
+                            </small>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <table class="table table-sm">
+                    <tr>
+                        <td>Puissance moyenne</td>
+                        <td class="fw-bold">
+                            {{ result.summary.avg_power_mw }} mW
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Energie/jour</td>
+                        <td class="fw-bold">
+                            {{ result.summary.daily_energy_mah }} mAh
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Energie/jour</td>
+                        <td class="fw-bold">
+                            {{ result.summary.daily_energy_wh }} Wh
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <div class="alert
+                    {% if result.summary.daily_energy_mah < 100 %}
+                        alert-success
+                    {% elif result.summary.daily_energy_mah < 1000 %}
+                        alert-warning
+                    {% else %}
+                        alert-danger
+                    {% endif %}">
+                    <strong>Verdict :</strong><br>
+                    {{ result.summary.verdict }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ======================== -->
+<!-- BLOC 2 : Detail modes   -->
+<!-- ======================== -->
+{% if result.energy_profile %}
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">
+            2️⃣ Detail par Mode de Fonctionnement
+        </h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped
+                      table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Mode</th>
+                    <th>Composant</th>
+                    <th>Courant (mA)</th>
+                    <th>Duree (ms)</th>
+                    <th>Nb/cycle</th>
+                    <th>Energie (mAh)</th>
+                    <th>% Energie</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in result.energy_profile.states %}
+                <tr>
+                    <td class="fw-bold">
+                        {{ s.name }}
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {{ s.component }}
+                        </small>
+                    </td>
+                    <td>{{ s.current_ma }}</td>
+                    <td>{{ s.duration_ms }}</td>
+                    <td>{{ s.count }}</td>
+                    <td class="text-danger
+                               fw-bold">
+                        {{ s.energy_mah }}
+                    </td>
+                    <td>
+                        <div class="progress"
+                             style="height:20px">
+                            <div class="progress-bar"
+                                 style="width:{{ s.energy_percent }}%">
+                                {{ s.energy_percent }}%
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-warning">
+                <tr>
+                    <th colspan="5">TOTAL</th>
+                    <th>
+                        {{ result.energy_profile.total_energy_mah }}
+                        mAh/cycle
+                    </th>
+                    <th>100%</th>
+                </tr>
+                <tr>
+                    <th colspan="5">
+                        Duree cycle
+                    </th>
+                    <th colspan="2">
+                        {{ result.energy_profile.cycle_duration_s }} s
+                        ({{ result.energy_profile.cycles_per_day }}
+                        cycles/jour)
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- ======================== -->
+<!-- BLOC 3 : Courbe LIGNE   -->
+<!-- ======================== -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">
+            3️⃣ Courbe de Consommation
+            (mA vs Temps)
+        </h5>
+    </div>
+    <div class="card-body">
+        <canvas id="curveChart"
+                height="120"></canvas>
+    </div>
+</div>
+
+<!-- ======================== -->
+<!-- BLOC 4 : Batterie       -->
+<!-- ======================== -->
+{% if result.battery_recommendation %}
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">
+            4️⃣ Recommandation Batterie
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <td>Capacite necessaire</td>
+                        <td class="fw-bold fs-5">
+                            {{ result.battery_recommendation.capacity_mah }}
+                            mAh
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Marge de securite</td>
+                        <td>
+                            x{{ result.battery_recommendation.safety_factor }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Autonomie estimee</td>
+                        <td class="fw-bold text-success">
+                            {{ result.battery_recommendation.autonomy_days }}
+                            jours
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <strong>Type recommande :</strong>
+                    <br>
+                    <span class="fs-5">
+                        🔋
+                        {{ result.battery_recommendation.type }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ======================== -->
+<!-- BLOC 5 : Adaptateur     -->
+<!-- ======================== -->
+{% if result.adapter_recommendation %}
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">
+            5️⃣ Recommandation Adaptateur
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <td>Tension de sortie</td>
+                        <td class="fw-bold">
+                            {{ result.adapter_recommendation.voltage_v }}
+                            V
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Courant de sortie</td>
+                        <td class="fw-bold">
+                            {{ result.adapter_recommendation.current_a }}
+                            A
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Courant pic</td>
+                        <td>
+                            {{ result.adapter_recommendation.peak_current_a }}
+                            A
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <strong>Type recommande :</strong>
+                    <br>
+                    <span class="fs-5">
+                        🔌
+                        {{ result.adapter_recommendation.type }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ======================== -->
+<!-- BLOC 6 : Solaire        -->
+<!-- ======================== -->
+{% if result.solar_report %}
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">
+            6️⃣ Recommandation Panneau Solaire
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <td>Puissance necessaire</td>
+                        <td class="fw-bold fs-5">
+                            {{ result.solar_report.panel_w }}
+                            W
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Ensoleillement
+                            ({{ result.solar_report.location }})</td>
+                        <td class="fw-bold">
+                            {{ result.solar_report.sun_hours }}
+                            h/jour
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Pire mois</td>
+                        <td>
+                            {{ result.solar_report.sun_hours_worst }}
+                            h/jour
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Rendement panneau</td>
+                        <td>
+                            {{ result.solar_report.panel_efficiency|floatformat:0 }}%
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Rendement chargeur</td>
+                        <td>
+                            {{ result.solar_report.charger_efficiency|floatformat:0 }}%
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <strong>Type recommande :</strong>
+                    <br>
+                    <span class="fs-5">
+                        ☀️
+                        {{ result.solar_report.panel_type }}
+                    </span>
+                </div>
+                <p>
+                    <strong>Installation :</strong>
+                    <br>
+                    Orientation :
+                    {{ result.solar_report.orientation }}
+                    <br>
+                    Inclinaison :
+                    {{ result.solar_report.inclination }}°
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-warning">
+    Aucun resultat.
+</div>
+{% endif %}
+
+<div class="text-center mt-4 mb-5">
+    <a href="{% url 'home' %}"
+       class="btn btn-secondary me-2">
+        🏠 Accueil
+    </a>
+    <a href="{% url 'project_create' %}"
+       class="btn btn-primary">
+        ➕ Nouveau
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var curve = {{ curve_json|safe }};
+var states = {{ states_json|safe }};
+
+// BLOC 3 : Courbe LIGNE (PAS barres)
+if (curve.length > 0) {
+    new Chart(
+        document.getElementById('curveChart'),
+        {
+            type: 'line',
+            data: {
+                labels: curve.map(
+                    function(p) { return p[0]; }
+                ),
+                datasets: [{
+                    label: 'Courant (mA)',
+                    data: curve.map(
+                        function(p) { return p[1]; }
+                    ),
+                    borderColor: '#dc3545',
+                    backgroundColor:
+                        'rgba(220,53,69,0.1)',
+                    fill: true,
+                    stepped: true,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text:
+                            'Profil de consommation'
+                            + ' sur un cycle complet',
+                        font: { size: 16 }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Temps (ms)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Courant (mA)'
+                        }
+                    }
+                }
+            }
+        }
+    );
+}
+</script>
+{% endblock %}

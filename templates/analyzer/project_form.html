@@ -1,0 +1,343 @@
+{% extends "analyzer/base.html" %}
+
+{% block title %}Nouveau Projet{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">➕ Nouveau Projet</h2>
+
+<form method="post"
+      enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- SECTION 1 -->
+    <div class="card mb-4">
+        <div class="card-header
+                    bg-primary text-white">
+            <h5 class="mb-0">
+                📍 1. Localisation
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="fw-bold">
+                        Nom *</label>
+                    {{ form.name }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="fw-bold">
+                        Ville *</label>
+                    {{ form.location_city }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="fw-bold">
+                        Pays *</label>
+                    {{ form.location_country }}
+                </div>
+                <div class="col-md-1 mb-3">
+                    <label>Lat</label>
+                    {{ form.latitude }}
+                </div>
+                <div class="col-md-1 mb-3">
+                    <label>Long</label>
+                    {{ form.longitude }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="card mb-4">
+        <div class="card-header
+                    bg-success text-white">
+            <h5 class="mb-0">
+                🔧 2. Composants + Modes
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>⚠️ Pas de valeurs par
+                    defaut !</strong><br>
+                Saisissez les modes depuis la
+                <strong>datasheet</strong>
+                de chaque composant.
+                Chaque carte a ses propres modes.
+            </div>
+
+            {{ comp_formset.management_form }}
+            <div id="compContainer">
+                {% for f in comp_formset %}
+                <div class="comp-row card mb-3
+                            border-success">
+                    <div class="card-header
+                                bg-light">
+                        <div class="row
+                                    align-items-end">
+                            <div class="col-md-3">
+                                <label>Nom *</label>
+                                {{ f.name }}
+                            </div>
+                            <div class="col-md-2">
+                                <label>
+                                    Categorie *
+                                </label>
+                                {{ f.category }}
+                            </div>
+                            <div class="col-md-2">
+                                <label>
+                                    Tension (V)
+                                </label>
+                                {{ f.voltage }}
+                            </div>
+                            <div class="col-md-3">
+                                <label>
+                                    PDF Datasheet
+                                </label>
+                                {{ f.datasheet }}
+                            </div>
+                            <div class="col-md-2">
+                                <button
+                                    type="button"
+                                    class="btn
+                                    btn-outline-danger
+                                    btn-sm w-100
+                                    delComp">
+                                    ❌ Retirer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-success
+                                   fw-bold">
+                            ⚡ Modes de consommation
+                            (depuis la datasheet) :
+                        </h6>
+                        <div class="modes-container"
+                             data-comp-idx="{{ forloop.counter0 }}">
+                            <div class="row mb-1
+                                        text-muted
+                                        small">
+                                <div class="col-md-3">
+                                    Nom du mode
+                                </div>
+                                <div class="col-md-2">
+                                    Courant
+                                </div>
+                                <div class="col-md-2">
+                                    Duree
+                                </div>
+                                <div class="col-md-2">
+                                    Nb/cycle
+                                </div>
+                            </div>
+                            <div class="mode-row
+                                        row mb-2">
+                                <div class="col-md-3">
+                                    <input type="text"
+                                        class="form-control
+                                               form-control-sm"
+                                        name="mode_name_{{ forloop.counter0 }}_0"
+                                        placeholder="Ex: Deep Sleep">
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group
+                                                input-group-sm">
+                                        <input type="number"
+                                            step="0.001"
+                                            class="form-control"
+                                            name="mode_current_{{ forloop.counter0 }}_0"
+                                            placeholder="mA">
+                                        <span class="input-group-text">
+                                            mA</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group
+                                                input-group-sm">
+                                        <input type="number"
+                                            step="1"
+                                            class="form-control"
+                                            name="mode_duration_{{ forloop.counter0 }}_0"
+                                            placeholder="ms">
+                                        <span class="input-group-text">
+                                            ms</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number"
+                                        min="0"
+                                        class="form-control
+                                               form-control-sm"
+                                        name="mode_count_{{ forloop.counter0 }}_0"
+                                        value="1">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button"
+                                        class="btn btn-sm
+                                               btn-outline-danger
+                                               delMode">
+                                        ✕</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button"
+                            class="btn btn-sm
+                                   btn-outline-success
+                                   addMode mt-1">
+                            ➕ Ajouter un mode
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button"
+                    class="btn btn-success
+                           w-100 mt-2"
+                    id="addComp">
+                ➕ Ajouter un composant
+            </button>
+        </div>
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="card mb-4">
+        <div class="card-header
+                    bg-info text-white">
+            <h5 class="mb-0">
+                💻 3. Programme
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="fw-bold">
+                    Type</label>
+                {{ firm_form.input_type }}
+            </div>
+            <div id="codeSection">
+                <div class="mb-3">
+                    <label>Code source</label>
+                    {{ firm_form.source_code }}
+                </div>
+                <div class="mb-3">
+                    <label>Ou fichier</label>
+                    {{ firm_form.code_file }}
+                </div>
+            </div>
+            <div id="flowSection"
+                 style="display:none;">
+                <label>Organigramme</label>
+                {{ firm_form.flowchart }}
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mb-5">
+        <button type="submit"
+                class="btn btn-lg
+                       btn-primary px-5 py-3">
+            🔬 Lancer l'Analyse
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('inputType')
+    .addEventListener('change', function() {
+    document.getElementById('codeSection')
+        .style.display =
+        this.value === 'code' ? 'block' : 'none';
+    document.getElementById('flowSection')
+        .style.display =
+        this.value === 'code' ? 'none' : 'block';
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('addMode')) {
+        var card = e.target.closest('.comp-row');
+        var cont = card.querySelector(
+            '.modes-container');
+        var ci = cont.dataset.compIdx;
+        var mi = cont.querySelectorAll(
+            '.mode-row').length;
+        var h = '<div class="mode-row row mb-2">'
+            +'<div class="col-md-3">'
+            +'<input type="text" class="form-control form-control-sm" '
+            +'name="mode_name_'+ci+'_'+mi+'" '
+            +'placeholder="Ex: WiFi TX"></div>'
+            +'<div class="col-md-2">'
+            +'<div class="input-group input-group-sm">'
+            +'<input type="number" step="0.001" class="form-control" '
+            +'name="mode_current_'+ci+'_'+mi+'" placeholder="mA">'
+            +'<span class="input-group-text">mA</span></div></div>'
+            +'<div class="col-md-2">'
+            +'<div class="input-group input-group-sm">'
+            +'<input type="number" step="1" class="form-control" '
+            +'name="mode_duration_'+ci+'_'+mi+'" placeholder="ms">'
+            +'<span class="input-group-text">ms</span></div></div>'
+            +'<div class="col-md-2">'
+            +'<input type="number" min="0" class="form-control form-control-sm" '
+            +'name="mode_count_'+ci+'_'+mi+'" value="1"></div>'
+            +'<div class="col-md-1">'
+            +'<button type="button" class="btn btn-sm btn-outline-danger delMode">✕</button>'
+            +'</div></div>';
+        cont.insertAdjacentHTML('beforeend', h);
+    }
+
+    if (e.target.classList.contains('delMode')) {
+        var cont = e.target.closest(
+            '.modes-container');
+        if (cont.querySelectorAll(
+            '.mode-row').length > 1) {
+            e.target.closest('.mode-row').remove();
+        }
+    }
+
+    if (e.target.classList.contains('delComp')) {
+        if (document.querySelectorAll(
+            '.comp-row').length > 1) {
+            e.target.closest('.comp-row').remove();
+            var t = document.getElementById(
+                'id_components-TOTAL_FORMS');
+            t.value = parseInt(t.value) - 1;
+        }
+    }
+});
+
+document.getElementById('addComp')
+    .addEventListener('click', function() {
+    var t = document.getElementById(
+        'id_components-TOTAL_FORMS');
+    var n = parseInt(t.value);
+    var box = document.getElementById(
+        'compContainer');
+    var first = box.querySelector('.comp-row');
+    var clone = first.cloneNode(true);
+    clone.innerHTML = clone.innerHTML
+        .replace(/components-\d+/g,
+            'components-' + n)
+        .replace(/mode_name_\d+_/g,
+            'mode_name_' + n + '_')
+        .replace(/mode_current_\d+_/g,
+            'mode_current_' + n + '_')
+        .replace(/mode_duration_\d+_/g,
+            'mode_duration_' + n + '_')
+        .replace(/mode_count_\d+_/g,
+            'mode_count_' + n + '_');
+    var mc = clone.querySelector(
+        '.modes-container');
+    if (mc) mc.dataset.compIdx = n;
+    clone.querySelectorAll('input,select')
+        .forEach(function(el) {
+        if (el.type==='file') el.value='';
+        else if (el.tagName==='SELECT')
+            el.selectedIndex=0;
+        else el.value='';
+    });
+    box.appendChild(clone);
+    t.value = n + 1;
+});
+</script>
+{% endblock %}
