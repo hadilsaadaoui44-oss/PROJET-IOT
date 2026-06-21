@@ -8,6 +8,7 @@ class EnergyCalculator:
     def __init__(self, project):
         self.project = project
         self.warnings = []
+        
 
     def analyze(self):
         components = self.project.components.all()
