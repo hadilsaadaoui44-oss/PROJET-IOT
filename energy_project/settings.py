@@ -123,4 +123,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# ========================
+# AUTHENTIFICATION PAR EMAIL
+# ========================
+AUTH_USER_MODEL = 'analyzer.CustomUser'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+
+# Pour tester l'envoi d'email (vous pouvez changer plus tard)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

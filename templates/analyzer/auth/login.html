@@ -1,0 +1,43 @@
+{% extends "analyzer/base.html" %}
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-white text-center py-3">
+                <h4 class="mb-0">🔑 Connexion</h4>
+            </div>
+
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ field.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-dark w-100 mt-3 py-2">
+                        Se connecter
+                    </button>
+                </form>
+            </div>
+
+            <div class="card-footer bg-light text-center py-3">
+                <span class="text-muted">Pas encore de compte ?</span>
+                <a href="{% url 'register' %}" class="fw-bold text-decoration-none">
+                    S'inscrire
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,73 +1,82 @@
 {% extends "analyzer/base.html" %}
-
-{% block title %}Accueil{% endblock %}
+{% block title %}Accueil — Assistant IoT{% endblock %}
 
 {% block content %}
-<div class="text-center mb-5">
-    <h1 class="display-4">
-        ⚡ Assistant Energetique IoT
+
+<!-- HERO -->
+<div class="text-center py-5">
+    <div style="font-size:3.5rem">⚡</div>
+    <h1 class="fw-bold mt-2" style="font-size:2.8rem; color:#1a1a2e;">
+        Assistant Energetique IoT
     </h1>
-    <p class="lead text-muted">
-        Dimensionnez l'alimentation
-        de vos devices IoT
+    <p class="text-muted fs-5 mt-2">
+        Dimensionnez l'alimentation de vos devices IoT
     </p>
-    <a href="{% url 'project_create' %}"
-       class="btn btn-lg btn-primary mt-3">
-        ➕ Creer un Projet
-    </a>
+
+    {% if user.is_authenticated %}
+        <p class="fw-bold fs-5 mt-3" style="color:#0066ff;">
+            👋 Bienvenue, {{ user.display_name }} !
+        </p>
+        <a href="{% url 'project_create' %}"
+           class="btn btn-lg mt-2 px-5 py-2 fw-bold text-white"
+           style="background:#0066ff; border-radius:10px; font-size:1.1rem;">
+            ➕ Créer un Nouveau Projet
+        </a>
+    {% else %}
+        <a href="{% url 'login' %}"
+           class="btn btn-lg mt-3 px-5 py-2 fw-bold text-white"
+           style="background:#0066ff; border-radius:10px;">
+            🔑 Se connecter
+        </a>
+    {% endif %}
 </div>
 
-<div class="row mb-5">
+<!-- SÉPARATEUR -->
+<hr style="border-color:#e0e0e0; margin: 1rem 0 2rem 0;">
+
+<!-- 3 ÉTAPES -->
+<div class="row g-4">
     <div class="col-md-4">
-        <div class="card h-100 border-primary">
-            <div class="card-body text-center">
-                <h1>📤</h1>
-                <h5>1. Upload</h5>
-                <p class="text-muted">
-                    Datasheets + Code + Ville
-                </p>
+        <div class="card step-card h-100 text-center p-4">
+            <div class="step-icon">📤</div>
+            <h5 class="fw-bold" style="color:#1a1a2e;">1. Upload</h5>
+            <p class="text-muted small">Datasheets + Code source + Localisation</p>
+            <div class="mt-auto pt-3">
+                <span class="badge px-3 py-2"
+                      style="background:#e8f0ff; color:#0066ff; border-radius:6px;">
+                    PDF · INO · PY
+                </span>
             </div>
         </div>
     </div>
+
     <div class="col-md-4">
-        <div class="card h-100 border-success">
-            <div class="card-body text-center">
-                <h1>🔬</h1>
-                <h5>2. Analyse</h5>
-                <p class="text-muted">
-                    6 modes de consommation
-                </p>
+        <div class="card step-card h-100 text-center p-4">
+            <div class="step-icon">🔬</div>
+            <h5 class="fw-bold" style="color:#1a1a2e;">2. Analyse IA</h5>
+            <p class="text-muted small">6 modes de consommation via n8n + Gemini</p>
+            <div class="mt-auto pt-3">
+                <span class="badge px-3 py-2"
+                      style="background:#fff3e0; color:#f39c12; border-radius:6px;">
+                    n8n · Gemini · RAG
+                </span>
             </div>
         </div>
     </div>
+
     <div class="col-md-4">
-        <div class="card h-100 border-warning">
-            <div class="card-body text-center">
-                <h1>☀️</h1>
-                <h5>3. Resultat</h5>
-                <p class="text-muted">
-                    Batterie + Panneau solaire
-                </p>
+        <div class="card step-card h-100 text-center p-4">
+            <div class="step-icon">🌞</div>
+            <h5 class="fw-bold" style="color:#1a1a2e;">3. Résultat</h5>
+            <p class="text-muted small">Batterie + Adaptateur + Panneau solaire</p>
+            <div class="mt-auto pt-3">
+                <span class="badge px-3 py-2"
+                      style="background:#e8f5e9; color:#27ae60; border-radius:6px;">
+                    mAh · Wh · kWc
+                </span>
             </div>
         </div>
     </div>
 </div>
 
-{% if projects %}
-<h3>📋 Projets recents</h3>
-<div class="list-group mt-3">
-    {% for p in projects %}
-    <a href="{% url 'report' p.id %}"
-       class="list-group-item
-              list-group-item-action">
-        <strong>{{ p.name }}</strong>
-        — {{ p.location_city }}
-        <span class="badge bg-success
-                     float-end">
-            {{ p.status }}
-        </span>
-    </a>
-    {% endfor %}
-</div>
-{% endif %}
 {% endblock %}
