@@ -1,0 +1,534 @@
+{% extends "analyzer/wizard/base.html" %}
+
+{% block wizard_content %}
+<h2>
+    {% if wizard_step == 'mcu' %}
+        Microcontrôleur
+    {% elif wizard_step == 'peripherals' %}
+        Capteurs et communications
+    {% else %}
+        Actionneurs et charges
+    {% endif %}
+</h2>
+
+<p class="wizard-help">
+    Ajoutez un bloc par composant. Pour chaque mode, renseignez le courant,
+    la durée et le nombre d’exécutions dans un cycle.
+</p>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% for code, title, required in sections %}
+    <section class="component-section mb-4" data-category="{{ code }}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h6 fw-bold mb-0">
+                {{ title }}{% if required %} *{% endif %}
+            </h3>
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-primary add-component"
+                data-category="{{ code }}">
+                Ajouter
+            </button>
+        </div>
+
+        <div class="component-list">
+            {% for component in component_rows %}
+                {% if component.category == code %}
+                <article
+                    class="component-block border rounded-3 p-3 mb-3"
+                    data-index="{{ forloop.counter0 }}">
+
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="field-label">Nom</label>
+
+                            {% if code == 'mcu' %}
+                            <div class="input-group">
+                                <input
+                                    class="form-control comp-name"
+                                    name="{{ code }}_name_{{ forloop.counter0 }}"
+                                    value="{{ component.name }}"
+                                    list="mcu-card-catalog"
+                                    autocomplete="off"
+                                    placeholder="Choisir ou saisir une carte"
+                                    required>
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary custom-mcu-name">
+                                    Autre carte
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                Écrivez quelques lettres pour afficher les propositions.
+                            </small>
+                            {% else %}
+                            <input
+                                class="form-control comp-name"
+                                name="{{ code }}_name_{{ forloop.counter0 }}"
+                                value="{{ component.name }}"
+                                required>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="field-label">Tension (V)</label>
+                            <input
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                step="0.001"
+                                name="{{ code }}_voltage_{{ forloop.counter0 }}"
+                                value="{{ component.voltage|default_if_none:'' }}">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="field-label">Datasheet PDF</label>
+                            <input
+                                class="form-control"
+                                type="file"
+                                accept=".pdf"
+                                name="{{ code }}_datasheet_{{ forloop.counter0 }}">
+                        </div>
+
+                        {% if code == 'mcu' %}
+                        <div class="col-md-3">
+                            <label class="field-label">Courant nominal (mA)</label>
+                            <input
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                step="0.001"
+                                name="mcu_nominal_{{ forloop.counter0 }}"
+                                value="{{ component.nominal_current_ma|default_if_none:'' }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="field-label">Nombre de cœurs</label>
+                            <input
+                                class="form-control"
+                                type="number"
+                                min="1"
+                                name="mcu_cores_{{ forloop.counter0 }}"
+                                value="{{ component.cores_count|default_if_none:'' }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="field-label">Fréq. min (MHz)</label>
+                            <input
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                name="mcu_fmin_{{ forloop.counter0 }}"
+                                value="{{ component.freq_min_mhz|default_if_none:'' }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="field-label">Fréq. max (MHz)</label>
+                            <input
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                name="mcu_fmax_{{ forloop.counter0 }}"
+                                value="{{ component.freq_max_mhz|default_if_none:'' }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="field-label">Fréq. utilisée (MHz)</label>
+                            <input
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                name="mcu_fused_{{ forloop.counter0 }}"
+                                value="{{ component.freq_used_mhz|default_if_none:'' }}">
+                        </div>
+                        {% endif %}
+
+                        {% if code == 'actuator' %}
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    name="actuator_seppower_{{ forloop.counter0 }}"
+                                    id="sep_{{ forloop.counter0 }}"
+                                    {% if component.separate_power %}checked{% endif %}>
+                                <label
+                                    class="form-check-label"
+                                    for="sep_{{ forloop.counter0 }}">
+                                    Alimentation séparée
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="modes mt-3">
+                        <div class="small fw-bold mb-2">Modes de fonctionnement</div>
+
+                        {% for mode in component.modes.all %}
+                        <div class="mode-row row g-2 mb-2">
+                            <div class="col-md-3">
+                                <input
+                                    class="form-control"
+                                    name="{{ code }}_mode_name_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                                    value="{{ mode.name }}"
+                                    placeholder="Mode">
+                            </div>
+                            <div class="col-md-3">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    min="0"
+                                    step="0.0001"
+                                    name="{{ code }}_mode_current_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                                    value="{{ mode.current_ma }}"
+                                    placeholder="Courant mA">
+                            </div>
+                            <div class="col-md-3">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    name="{{ code }}_mode_duration_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                                    value="{{ mode.duration_ms }}"
+                                    placeholder="Durée ms">
+                            </div>
+                            <div class="col-md-2">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    min="1"
+                                    name="{{ code }}_mode_count_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                                    value="{{ mode.count_per_cycle }}"
+                                    aria-label="Nombre d’exécutions par cycle">
+                            </div>
+                            <div class="col-md-1">
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-danger remove-row"
+                                    aria-label="Retirer le mode">
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="mode-row row g-2 mb-2">
+                            <div class="col-md-3">
+                                <input
+                                    class="form-control"
+                                    name="{{ code }}_mode_name_{{ forloop.counter0 }}_0"
+                                    placeholder="Mode">
+                            </div>
+                            <div class="col-md-3">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    min="0"
+                                    step="0.0001"
+                                    name="{{ code }}_mode_current_{{ forloop.counter0 }}_0"
+                                    placeholder="Courant mA">
+                            </div>
+                            <div class="col-md-3">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    name="{{ code }}_mode_duration_{{ forloop.counter0 }}_0"
+                                    placeholder="Durée ms">
+                            </div>
+                            <div class="col-md-2">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    min="1"
+                                    name="{{ code }}_mode_count_{{ forloop.counter0 }}_0"
+                                    value="1"
+                                    aria-label="Nombre d’exécutions par cycle">
+                            </div>
+                            <div class="col-md-1">
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-danger remove-row"
+                                    aria-label="Retirer le mode">
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex gap-2 mt-2">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary add-mode">
+                            Ajouter un mode
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger remove-component">
+                            Retirer le composant
+                        </button>
+                    </div>
+                </article>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+
+    <div class="wizard-actions">
+        <a
+            class="btn btn-outline-secondary"
+            href="{% url previous_url project.id %}">
+            Précédent
+        </a>
+        <button class="btn btn-primary" type="submit">
+            {{ next_label }}
+        </button>
+    </div>
+</form>
+
+<datalist id="mcu-card-catalog">
+    <option value="LoRa-E5 Dev Board"></option>
+    <option value="Wio-E5 Dev Board"></option>
+    <option value="STM32WLE5JC"></option>
+    <option value="B-L072Z-LRWAN1"></option>
+    <option value="Heltec WiFi LoRa 32 V3"></option>
+    <option value="TTGO LoRa32"></option>
+    <option value="RAK WisBlock RAK4631"></option>
+    <option value="ESP32 DevKit V1"></option>
+    <option value="ESP32-WROOM-32"></option>
+    <option value="ESP32-S3 DevKitC-1"></option>
+    <option value="ESP32-C3 DevKitM-1"></option>
+    <option value="ESP8266 NodeMCU"></option>
+    <option value="STM32 Nucleo-L073RZ"></option>
+    <option value="STM32 Nucleo-L476RG"></option>
+    <option value="STM32 Nucleo-WL55JC"></option>
+    <option value="STM32F4 Discovery"></option>
+    <option value="Arduino Uno R3"></option>
+    <option value="Arduino Nano"></option>
+    <option value="Arduino Nano 33 IoT"></option>
+    <option value="Arduino MKR WAN 1310"></option>
+    <option value="Arduino Portenta H7"></option>
+    <option value="Nordic nRF52840 DK"></option>
+    <option value="Nordic nRF5340 DK"></option>
+    <option value="Raspberry Pi Pico"></option>
+    <option value="Raspberry Pi Pico W"></option>
+    <option value="Teensy 4.1"></option>
+    <option value="BBC micro:bit V2"></option>
+    <option value="Particle Boron"></option>
+</datalist>
+
+<template id="component-template">
+    <article class="component-block border rounded-3 p-3 mb-3">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label class="field-label">Nom</label>
+                <div class="input-group">
+                    <input class="form-control comp-name" required>
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary custom-mcu-name d-none">
+                        Autre carte
+                    </button>
+                </div>
+                <small class="mcu-name-help text-muted d-none">
+                    Écrivez quelques lettres pour afficher les propositions.
+                </small>
+            </div>
+            <div class="col-md-3">
+                <label class="field-label">Tension (V)</label>
+                <input
+                    class="form-control comp-voltage"
+                    type="number"
+                    min="0"
+                    step="0.001">
+            </div>
+            <div class="col-md-3">
+                <label class="field-label">Datasheet PDF</label>
+                <input
+                    class="form-control comp-file"
+                    type="file"
+                    accept=".pdf">
+            </div>
+        </div>
+
+        <div class="modes mt-3"></div>
+
+        <div class="d-flex gap-2 mt-2">
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary add-mode">
+                Ajouter un mode
+            </button>
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-danger remove-component">
+                Retirer le composant
+            </button>
+        </div>
+    </article>
+</template>
+
+<script>
+(() => {
+    const modeRow = (category, componentIndex, modeIndex) => {
+        const row = document.createElement('div');
+        row.className = 'mode-row row g-2 mb-2';
+        row.innerHTML = `
+            <div class="col-md-3">
+                <label class="field-label">Mode</label>
+                <input class="form-control" name="${category}_mode_name_${componentIndex}_${modeIndex}" placeholder="Ex : Deep Sleep">
+            </div>
+            <div class="col-md-3">
+                <label class="field-label">Courant (mA)</label>
+                <input class="form-control" type="number" min="0" step="0.0001" name="${category}_mode_current_${componentIndex}_${modeIndex}" placeholder="mA">
+            </div>
+            <div class="col-md-3">
+                <label class="field-label">Durée (ms)</label>
+                <input class="form-control" type="number" min="0" step="0.01" name="${category}_mode_duration_${componentIndex}_${modeIndex}" placeholder="ms">
+            </div>
+            <div class="col-md-2">
+                <label class="field-label">Nb/cycle</label>
+                <input class="form-control" type="number" min="1" name="${category}_mode_count_${componentIndex}_${modeIndex}" value="1">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger remove-row" aria-label="Retirer le mode">×</button>
+            </div>`;
+        return row;
+    };
+
+    const configureMcuName = block => {
+        const input = block.querySelector('.comp-name');
+        const button = block.querySelector('.custom-mcu-name');
+        const help = block.querySelector('.mcu-name-help');
+
+        if (input) {
+            input.setAttribute('list', 'mcu-card-catalog');
+            input.setAttribute('autocomplete', 'off');
+            input.placeholder = 'Choisir ou saisir une carte';
+        }
+        if (button) button.classList.remove('d-none');
+        if (help) help.classList.remove('d-none');
+    };
+
+    const addCategoryFields = (block, category, index) => {
+        const fields = block.querySelector('.row.g-2');
+
+        if (category === 'mcu') {
+            configureMcuName(block);
+            fields.insertAdjacentHTML('beforeend', `
+                <div class="col-md-3">
+                    <label class="field-label">Courant nominal (mA)</label>
+                    <input class="form-control" type="number" min="0" step="0.001" name="mcu_nominal_${index}" placeholder="80">
+                </div>
+                <div class="col-md-2">
+                    <label class="field-label">Nombre de cœurs</label>
+                    <input class="form-control" type="number" min="1" name="mcu_cores_${index}" placeholder="2">
+                </div>
+                <div class="col-md-2">
+                    <label class="field-label">Fréq. min (MHz)</label>
+                    <input class="form-control" type="number" min="0" step="0.01" name="mcu_fmin_${index}" placeholder="80">
+                </div>
+                <div class="col-md-2">
+                    <label class="field-label">Fréq. max (MHz)</label>
+                    <input class="form-control" type="number" min="0" step="0.01" name="mcu_fmax_${index}" placeholder="240">
+                </div>
+                <div class="col-md-2">
+                    <label class="field-label">Fréq. utilisée (MHz)</label>
+                    <input class="form-control" type="number" min="0" step="0.01" name="mcu_fused_${index}" placeholder="160">
+                </div>`);
+        }
+
+        if (category === 'actuator') {
+            fields.insertAdjacentHTML('beforeend', `
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="actuator_seppower_${index}" id="sep_${index}">
+                        <label class="form-check-label" for="sep_${index}">Alimentation séparée</label>
+                    </div>
+                </div>`);
+        }
+    };
+
+    const wireBlock = block => {
+        const addModeButton = block.querySelector('.add-mode');
+        const removeButton = block.querySelector('.remove-component');
+
+        if (addModeButton) {
+            addModeButton.addEventListener('click', () => {
+                const category = block.closest('.component-section').dataset.category;
+                block.querySelector('.modes').append(
+                    modeRow(category, block.dataset.index, Date.now())
+                );
+            });
+        }
+
+        if (removeButton) {
+            removeButton.addEventListener('click', () => block.remove());
+        }
+    };
+
+    const addComponent = section => {
+        const category = section.dataset.category;
+        const index = Date.now() + Math.floor(Math.random() * 1000);
+        const template = document.querySelector('#component-template');
+        const block = template.content.firstElementChild.cloneNode(true);
+
+        block.dataset.index = index;
+        block.querySelector('.comp-name').name = `${category}_name_${index}`;
+        block.querySelector('.comp-voltage').name = `${category}_voltage_${index}`;
+        block.querySelector('.comp-file').name = `${category}_datasheet_${index}`;
+
+        addCategoryFields(block, category, index);
+        block.querySelector('.modes').append(modeRow(category, index, 0));
+        section.querySelector('.component-list').append(block);
+        wireBlock(block);
+    };
+
+    document.querySelectorAll('.component-block').forEach(wireBlock);
+
+    document.querySelectorAll('.add-component').forEach(button => {
+        const section = button.closest('.component-section');
+
+        button.addEventListener('click', () => addComponent(section));
+
+        if (!section.querySelector('.component-block')) {
+            addComponent(section);
+        }
+    });
+
+    document.addEventListener('click', event => {
+        if (event.target.classList.contains('remove-row')) {
+            event.target.closest('.mode-row').remove();
+        }
+
+        if (event.target.classList.contains('custom-mcu-name')) {
+            const button = event.target;
+            const group = button.closest('.input-group');
+            const input = group.querySelector('.comp-name');
+
+            if (input.hasAttribute('list')) {
+                input.removeAttribute('list');
+                input.value = '';
+                input.placeholder = 'Saisir le nom exact de la carte';
+                button.textContent = 'Voir les propositions';
+            } else {
+                input.setAttribute('list', 'mcu-card-catalog');
+                input.placeholder = 'Choisir ou saisir une carte';
+                button.textContent = 'Autre carte';
+            }
+
+            input.focus();
+        }
+    });
+})();
+</script>
+{% endblock %}

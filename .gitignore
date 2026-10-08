@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.env
+db.sqlite3
+media/
+logs/
+*.log
+*.bak*
+views_backup*.py
+backup_energyai_wizard_*/
+pvgis_test*.json
+structure.txt

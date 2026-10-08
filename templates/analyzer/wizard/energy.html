@@ -1,0 +1,285 @@
+{% extends "analyzer/wizard/base.html" %}
+
+{% block wizard_content %}
+
+<style>
+    .energy-title {
+        margin: 28px 0 14px;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .energy-fieldset {
+        margin: 0 0 20px;
+        padding: 6px 20px 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+    }
+
+    .energy-fieldset legend {
+        float: none;
+        width: auto;
+        margin: 0;
+        padding: 0 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    [data-show-when][hidden] {
+        display: none !important;
+    }
+
+    .datasheet-zone {
+        padding: 18px;
+        border: 1px dashed #94a3b8;
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+
+    .datasheet-zone .field-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    .datasheet-status {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border: 1px solid #bfdbfe;
+        border-radius: 9px;
+        background: #eff6ff;
+        color: #1e40af;
+        font-size: 0.85rem;
+    }
+
+    .datasheet-status a {
+        font-weight: 700;
+    }
+
+    .energy-note {
+        margin-top: 8px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: #eff6ff;
+        color: #1e293b;
+    }
+</style>
+
+<h2 class="h4 fw-bold">Votre alimentation : choisir ou vérifier</h2>
+
+<p class="wizard-help">
+    Décrivez votre besoin. Nous déterminerons les caractéristiques de
+    l’alimentation adaptée. Vous pouvez demander une batterie et vérifier un
+    panneau, ou l’inverse.
+</p>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {# ====================================================== #}
+    {# BATTERIE                                               #}
+    {# ====================================================== #}
+    <div data-objective-block>
+
+        <h3 class="energy-title">Batterie</h3>
+
+        {% if battery_form.non_field_errors %}
+            {% for error in battery_form.non_field_errors %}
+                <div class="alert alert-danger py-2">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <fieldset class="energy-fieldset">
+            <legend>Votre demande</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.objective %}
+            </div>
+        </fieldset>
+
+        {# Matériel choisi : visible seulement en mode « Vérifier » #}
+        <fieldset class="energy-fieldset" data-show-when="verify">
+            <legend>Matériel choisi</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.chosen_model %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.chosen_technology %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.value_scope %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.nominal_voltage_v %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.capacity_mah %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.cells_series %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.cells_parallel %}
+            </div>
+        </fieldset>
+
+        <fieldset class="energy-fieldset">
+            <legend>Autonomie souhaitée</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.autonomy_days %}
+            </div>
+        </fieldset>
+
+        <fieldset class="energy-fieldset">
+            <legend>Contraintes facultatives</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.battery_type %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.max_weight_g %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.max_volume_cm3 %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.max_budget %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.currency %}
+                {% include "analyzer/wizard/_energy_field.html" with field=battery_form.rechargeable_only %}
+            </div>
+        </fieldset>
+
+        <div class="datasheet-zone mb-3">
+            <label class="field-label" for="battery_datasheet">
+                Fiche technique de votre batterie
+                <span class="text-muted fw-normal">— facultative</span>
+            </label>
+
+            <input
+                type="file"
+                class="form-control"
+                id="battery_datasheet"
+                name="battery_datasheet"
+                accept=".pdf,application/pdf"
+            >
+
+            <div class="form-text mt-2">
+                PDF, 10 Mo maximum. Renseignez seulement les caractéristiques
+                connues. Une fiche technique ne décrit pas forcément le montage
+                de votre pack.
+            </div>
+
+            {% if battery and battery.battery_datasheet %}
+                <div class="datasheet-status">
+                    <strong>Fiche technique actuellement enregistrée :</strong>
+                    <a
+                        href="{{ battery.battery_datasheet.url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        consulter le fichier PDF
+                    </a>
+                    <div class="mt-1 text-muted">
+                        Sélectionnez un nouveau fichier uniquement si vous
+                        souhaitez remplacer la fiche actuelle.
+                    </div>
+                </div>
+            {% endif %}
+
+            {# ICI : remets ton bloc « Lire la fiche et proposer les valeurs » #}
+            {# (bouton + tableau valeur documentaire / preuve / action)       #}
+        </div>
+    </div>
+
+    {# ====================================================== #}
+    {# PANNEAU SOLAIRE                                        #}
+    {# ====================================================== #}
+    <div data-objective-block>
+
+        <h3 class="energy-title">Panneau solaire</h3>
+
+        {% if solar_form.non_field_errors %}
+            {% for error in solar_form.non_field_errors %}
+                <div class="alert alert-danger py-2">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <fieldset class="energy-fieldset">
+            <legend>Votre demande</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.objective %}
+            </div>
+        </fieldset>
+
+        {# Matériel choisi : visible seulement en mode « Vérifier » #}
+        <fieldset class="energy-fieldset" data-show-when="verify">
+            <legend>Matériel choisi</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.chosen_model %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.chosen_technology %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.panel_power_w %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.panel_count %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.vmp_v %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.voc_v %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.imp_ma %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.isc_ma %}
+            </div>
+        </fieldset>
+
+        {# Masqué si « Sans alimentation solaire » #}
+        <fieldset class="energy-fieldset" data-show-when="recommend verify">
+            <legend>Où sera placé le panneau ?</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.placement %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.shading_notes %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.lighting_notes %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.azimuth_deg %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.tilt_deg %}
+            </div>
+        </fieldset>
+
+        <fieldset class="energy-fieldset" data-show-when="recommend verify">
+            <legend>Contraintes facultatives</legend>
+            <div class="row g-3 mt-0">
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.panel_type %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.max_surface_cm2 %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.max_budget %}
+                {% include "analyzer/wizard/_energy_field.html" with field=solar_form.currency %}
+            </div>
+        </fieldset>
+
+        <div class="energy-note" data-show-when="recommend verify">
+            Décrivez les arbres, bâtiments, la poussière ou l’éclairage
+            intérieur dans vos remarques sur l’installation. Les données
+            solaires et météo seront récupérées lors de l’analyse. Aucune perte
+            inconnue ne sera considérée automatiquement comme nulle.
+        </div>
+    </div>
+
+    <div class="wizard-actions">
+        <a
+            class="btn btn-outline-secondary"
+            href="{% url 'wizard_firmware' project.id %}"
+        >
+            Précédent
+        </a>
+
+        <button class="btn btn-primary" type="submit">
+            Vérifier le projet
+        </button>
+    </div>
+</form>
+
+<script>
+    // Affiche / masque les sections selon « Objectif de l’analyse ».
+    // Un élément avec data-show-when="verify" n'apparaît qu'en mode « verify » ;
+    // data-show-when="recommend verify" apparaît dans les deux modes.
+    (function () {
+        function bindBlock(block) {
+            var select = block.querySelector('select[name$="objective"]');
+
+            if (!select) {
+                return;
+            }
+
+            function sync() {
+                var current = select.value;
+
+                block.querySelectorAll('[data-show-when]').forEach(function (element) {
+                    var modes = element.getAttribute('data-show-when').split(' ');
+                    element.hidden = modes.indexOf(current) === -1;
+                });
+            }
+
+            select.addEventListener('change', sync);
+            sync();
+        }
+
+        document.querySelectorAll('[data-objective-block]').forEach(bindBlock);
+    })();
+</script>
+
+{% endblock %}

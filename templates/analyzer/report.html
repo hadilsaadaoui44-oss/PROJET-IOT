@@ -1,449 +1,1648 @@
 {% extends "analyzer/base.html" %}
+{% load static %}
 
-{% block title %}
-    Rapport - {{ project.name }}
-{% endblock %}
+{% block title %}{{ project.name }} — Tableau de bord d’ingénierie{% endblock %}
 
 {% block content %}
-<h2 class="mb-2">
-    📊 Bilan Energetique
-</h2>
-<h4 class="text-muted mb-4">
-    {{ project.name }} — 📍
-    {{ project.location_city }},
-    {{ project.location_country }}
-</h4>
+<div class="dashboard-shell">
 
-{% if result %}
+    <aside class="dashboard-sidebar">
 
-<!-- ======================== -->
-<!-- BLOC 1 : Resume global  -->
-<!-- ======================== -->
-{% if result.summary %}
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">
-            1️⃣ Resume Global
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-4">
-                <table class="table table-sm">
-                    <tr>
-                        <td>Courant moyen</td>
-                        <td class="fw-bold">
-                            {{ result.summary.avg_current_ma }} mA
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Courant min</td>
-                        <td class="text-success fw-bold">
-                            {{ result.summary.min_current_ma }} mA
-                            <small class="text-muted">
-                                ({{ result.summary.min_current_mode }})
-                            </small>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Courant max</td>
-                        <td class="text-danger fw-bold">
-                            {{ result.summary.max_current_ma }} mA
-                            <small class="text-muted">
-                                ({{ result.summary.max_current_mode }})
-                            </small>
-                        </td>
-                    </tr>
-                </table>
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">⚡</div>
+            <div>
+                <strong>AIDE-IoT</strong>
+                <span>Suite d’ingénierie</span>
             </div>
-            <div class="col-md-4">
-                <table class="table table-sm">
-                    <tr>
-                        <td>Puissance moyenne</td>
-                        <td class="fw-bold">
-                            {{ result.summary.avg_power_mw }} mW
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Energie/jour</td>
-                        <td class="fw-bold">
-                            {{ result.summary.daily_energy_mah }} mAh
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Energie/jour</td>
-                        <td class="fw-bold">
-                            {{ result.summary.daily_energy_wh }} Wh
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-md-4">
-                <div class="alert
-                    {% if result.summary.daily_energy_mah < 100 %}
-                        alert-success
-                    {% elif result.summary.daily_energy_mah < 1000 %}
-                        alert-warning
+        </div>
+
+        <nav class="dashboard-nav" aria-label="Navigation du rapport">
+            <a href="#overview" class="dashboard-nav-link active">Vue d'ensemble</a>
+            <a href="#energy" class="dashboard-nav-link">Énergie</a>
+            <a href="#profile" class="dashboard-nav-link">Profil de consommation</a>
+            <a href="#battery" class="dashboard-nav-link">Batterie</a>
+            <a href="#solar" class="dashboard-nav-link">Panneaux solaires</a>
+            <a href="#power" class="dashboard-nav-link">Électronique</a>
+            <a href="#lifecycle" class="dashboard-nav-link">Cycle de vie</a>
+            <a href="#recommendations" class="dashboard-nav-link">Recommandations</a>
+            <a href="#score" class="dashboard-nav-link">Score</a>
+            <a href="#conclusion" class="dashboard-nav-link">Conclusion IA</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-status-dot"></div>
+
+            <div>
+                <strong>
+                    {% if result.status == "completed" %}
+                        Analyse terminée
+                    {% elif result.status == "failed" %}
+                        Analyse échouée
+                    {% elif result.status == "pending" %}
+                        Analyse en attente
                     {% else %}
-                        alert-danger
-                    {% endif %}">
-                    <strong>Verdict :</strong><br>
-                    {{ result.summary.verdict }}
-                </div>
+                        {{ result.status|default:"Statut inconnu"|title }}
+                    {% endif %}
+                </strong>
+
+                <span>
+                    Source : {{ result.analysis_source|default:"AIDE-IoT Engine" }}
+                </span>
             </div>
         </div>
-    </div>
-</div>
-{% endif %}
 
-<!-- ======================== -->
-<!-- BLOC 2 : Detail modes   -->
-<!-- ======================== -->
-{% if result.energy_profile %}
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">
-            2️⃣ Detail par Mode de Fonctionnement
-        </h5>
-    </div>
-    <div class="card-body">
-        <table class="table table-striped
-                      table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Mode</th>
-                    <th>Composant</th>
-                    <th>Courant (mA)</th>
-                    <th>Duree (ms)</th>
-                    <th>Nb/cycle</th>
-                    <th>Energie (mAh)</th>
-                    <th>% Energie</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in result.energy_profile.states %}
-                <tr>
-                    <td class="fw-bold">
-                        {{ s.name }}
-                    </td>
-                    <td>
-                        <small class="text-muted">
-                            {{ s.component }}
-                        </small>
-                    </td>
-                    <td>{{ s.current_ma }}</td>
-                    <td>{{ s.duration_ms }}</td>
-                    <td>{{ s.count }}</td>
-                    <td class="text-danger
-                               fw-bold">
-                        {{ s.energy_mah }}
-                    </td>
-                    <td>
-                        <div class="progress"
-                             style="height:20px">
-                            <div class="progress-bar"
-                                 style="width:{{ s.energy_percent }}%">
-                                {{ s.energy_percent }}%
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot class="table-warning">
-                <tr>
-                    <th colspan="5">TOTAL</th>
-                    <th>
-                        {{ result.energy_profile.total_energy_mah }}
-                        mAh/cycle
-                    </th>
-                    <th>100%</th>
-                </tr>
-                <tr>
-                    <th colspan="5">
-                        Duree cycle
-                    </th>
-                    <th colspan="2">
-                        {{ result.energy_profile.cycle_duration_s }} s
-                        ({{ result.energy_profile.cycles_per_day }}
-                        cycles/jour)
-                    </th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-</div>
-{% endif %}
+    </aside>
 
-<!-- ======================== -->
-<!-- BLOC 3 : Courbe LIGNE   -->
-<!-- ======================== -->
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">
-            3️⃣ Courbe de Consommation
-            (mA vs Temps)
-        </h5>
-    </div>
-    <div class="card-body">
-        <canvas id="curveChart"
-                height="120"></canvas>
-    </div>
-</div>
+    <section class="dashboard-content">
 
-<!-- ======================== -->
-<!-- BLOC 4 : Batterie       -->
-<!-- ======================== -->
-{% if result.battery_recommendation %}
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">
-            4️⃣ Recommandation Batterie
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <table class="table table-sm">
-                    <tr>
-                        <td>Capacite necessaire</td>
-                        <td class="fw-bold fs-5">
-                            {{ result.battery_recommendation.capacity_mah }}
-                            mAh
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Marge de securite</td>
-                        <td>
-                            x{{ result.battery_recommendation.safety_factor }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Autonomie estimee</td>
-                        <td class="fw-bold text-success">
-                            {{ result.battery_recommendation.autonomy_days }}
-                            jours
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <div class="alert alert-info">
-                    <strong>Type recommande :</strong>
-                    <br>
-                    <span class="fs-5">
-                        🔋
-                        {{ result.battery_recommendation.type }}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+        <!-- ========================= -->
+        <!-- HEADER -->
+        <!-- ========================= -->
 
-<!-- ======================== -->
-<!-- BLOC 5 : Adaptateur     -->
-<!-- ======================== -->
-{% if result.adapter_recommendation %}
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">
-            5️⃣ Recommandation Adaptateur
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <table class="table table-sm">
-                    <tr>
-                        <td>Tension de sortie</td>
-                        <td class="fw-bold">
-                            {{ result.adapter_recommendation.voltage_v }}
-                            V
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Courant de sortie</td>
-                        <td class="fw-bold">
-                            {{ result.adapter_recommendation.current_a }}
-                            A
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Courant pic</td>
-                        <td>
-                            {{ result.adapter_recommendation.peak_current_a }}
-                            A
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <div class="alert alert-info">
-                    <strong>Type recommande :</strong>
-                    <br>
-                    <span class="fs-5">
-                        🔌
-                        {{ result.adapter_recommendation.type }}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+        <header class="dashboard-hero" id="overview">
 
-<!-- ======================== -->
-<!-- BLOC 6 : Solaire        -->
-<!-- ======================== -->
-{% if result.solar_report %}
-<div class="card mb-4">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">
-            6️⃣ Recommandation Panneau Solaire
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <table class="table table-sm">
-                    <tr>
-                        <td>Puissance necessaire</td>
-                        <td class="fw-bold fs-5">
-                            {{ result.solar_report.panel_w }}
-                            W
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Ensoleillement
-                            ({{ result.solar_report.location }})</td>
-                        <td class="fw-bold">
-                            {{ result.solar_report.sun_hours }}
-                            h/jour
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Pire mois</td>
-                        <td>
-                            {{ result.solar_report.sun_hours_worst }}
-                            h/jour
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Rendement panneau</td>
-                        <td>
-                            {{ result.solar_report.panel_efficiency|floatformat:0 }}%
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Rendement chargeur</td>
-                        <td>
-                            {{ result.solar_report.charger_efficiency|floatformat:0 }}%
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <div class="alert alert-info">
-                    <strong>Type recommande :</strong>
-                    <br>
-                    <span class="fs-5">
-                        ☀️
-                        {{ result.solar_report.panel_type }}
-                    </span>
-                </div>
+            <div>
+
+                <span class="eyebrow">
+                    Rapport d’ingénierie énergétique
+                </span>
+
+                <h1>{{ project.name }}</h1>
+
                 <p>
-                    <strong>Installation :</strong>
-                    <br>
-                    Orientation :
-                    {{ result.solar_report.orientation }}
-                    <br>
-                    Inclinaison :
-                    {{ result.solar_report.inclination }}°
+                    {{ project.location_city }}, {{ project.location_country }}
+
+                    ·
+
+                    {% if project.installation_type == "outdoor" %}
+                        Installation extérieure
+                    {% elif project.installation_type == "indoor" %}
+                        Installation intérieure
+                    {% else %}
+                        {{ project.get_installation_type_display|default:project.installation_type }}
+                    {% endif %}
+
+                    · Créé le {{ project.created_at|date:"d/m/Y" }}
                 </p>
+
             </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 
-{% else %}
-<div class="alert alert-warning">
-    Aucun resultat.
-</div>
-{% endif %}
+            <div class="hero-actions">
 
-<div class="text-center mt-4 mb-5">
-    <a href="{% url 'home' %}"
-       class="btn btn-secondary me-2">
-        🏠 Accueil
-    </a>
-    <a href="{% url 'project_create' %}"
-       class="btn btn-primary">
-        ➕ Nouveau
-    </a>
+                <button
+                    type="button"
+                    class="btn-dashboard secondary"
+                    onclick="window.print()">
+                    Export PDF
+                </button>
+
+                <a
+                    href="{% url 'project_list' %}"
+                    class="btn-dashboard ghost">
+                    Retour aux projets
+                </a>
+
+            </div>
+
+        </header>
+
+
+        {% if not result %}
+
+            <div class="dashboard-empty">
+
+                <h2>Aucun résultat disponible</h2>
+
+                <p>
+                    L’analyse de ce projet n’est pas encore terminée.
+                </p>
+
+            </div>
+
+        {% else %}
+
+
+        <!-- ========================= -->
+        <!-- RESUME -->
+        <!-- ========================= -->
+
+        <section class="summary-grid">
+
+            <article class="summary-card summary-card-main">
+
+                <div class="section-heading compact">
+
+                    <div>
+
+                        <span class="section-kicker">
+                            Résumé du rapport
+                        </span>
+
+                        <h2>
+                            Synthèse exécutive
+                        </h2>
+
+                    </div>
+
+                    <span class="badge-status">
+                        {{ executive_summary.project_status|default:"Analyse terminée" }}
+                    </span>
+
+                </div>
+
+                <p class="executive-text">
+                    {{ executive_summary.summary|default:"L’analyse technique du projet est terminée. Les résultats détaillés sont présentés ci-dessous." }}
+                </p>
+
+                <div class="summary-highlights">
+
+                    <div>
+                        <span>Faisabilité</span>
+                        <strong>
+                            {{ executive_summary.technical_feasibility|default:"À évaluer" }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Évaluation</span>
+                        <strong>
+                            {{ executive_summary.overall_assessment|default:"—" }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Consommation/jour</span>
+                        <strong>
+                            {{ energy.energy_daily_mwh|default:result.daily_energy_mwh|default:0|floatformat:3 }}
+                            mWh
+                        </strong>
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <article class="score-orb-card">
+
+                <div
+                    class="score-orb"
+                    style="--score: {{ score.overall_score|default:0 }};">
+
+                    <div>
+
+                        <strong>
+                            {{ score.overall_score|default:0|floatformat:1 }}
+                        </strong>
+
+                        <span>/ 100</span>
+
+                    </div>
+
+                </div>
+
+                <h3>
+                    {{ score.rating|default:"Non évalué" }}
+                </h3>
+
+                <p>
+                    Score global d’ingénierie
+                </p>
+
+            </article>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- KPI -->
+        <!-- ========================= -->
+
+        <section class="kpi-grid">
+
+            <article class="kpi-card">
+
+                <div class="kpi-icon">⚡</div>
+
+                <span>Courant moyen</span>
+
+                <strong>
+                    {{ energy.current_average_ma|default:0|floatformat:3 }}
+                    mA
+                </strong>
+
+                <small>
+                    Pic :
+                    {{ energy.current_max_ma|default:0|floatformat:3 }}
+                    mA
+                </small>
+
+            </article>
+
+
+            <article class="kpi-card">
+
+                <div class="kpi-icon">🔋</div>
+
+                <span>Batterie</span>
+
+                <strong>
+                    {{ battery.technology|default:"Non définie" }}
+                </strong>
+
+                <small>
+                    {{ battery.capacity_mah|default:0|floatformat:0 }}
+                    mAh
+                    ·
+                    {{ battery.voltage_v|default:0|floatformat:2 }}
+                    V
+                </small>
+
+            </article>
+
+
+            <article class="kpi-card">
+
+                <div class="kpi-icon">☀️</div>
+
+                <span>Panneau solaire</span>
+
+                <strong>
+                    {{ solar.technology|default:"Non défini" }}
+                </strong>
+
+                <small>
+                    {{ solar.panel_power_w|default:0|floatformat:2 }}
+                    W
+                    ·
+                    {{ solar.panel_voltage_v|default:0|floatformat:2 }}
+                    V
+                </small>
+
+            </article>
+
+
+            <article class="kpi-card">
+
+                <div class="kpi-icon">🛡️</div>
+
+                <span>Fiabilité</span>
+
+                <strong>
+                    {{ score.reliability_score|default:0|floatformat:1 }}
+                    %
+                </strong>
+
+                <small>
+                    {{ lifecycle.simulation_years|default:0 }}
+                    ans simulés
+                </small>
+
+            </article>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- ENERGIE -->
+        <!-- ========================= -->
+
+        <section class="dashboard-section" id="energy">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Analyse du système
+                    </span>
+
+                    <h2>
+                        Analyse énergétique
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="kpi-grid energy-kpis">
+
+
+                <article class="kpi-card featured">
+
+                    <span>
+                        Énergie journalière
+                    </span>
+
+                    <strong>
+                        {{ energy.energy_daily_mwh|default:result.daily_energy_mwh|default:0|floatformat:3 }}
+                        <small>mWh/j</small>
+                    </strong>
+
+                    <em>
+                        Besoin calculé
+                    </em>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <span>
+                        Énergie / cycle
+                    </span>
+
+                    <strong>
+                        {{ energy.energy_cycle_mwh|default:0|floatformat:6 }}
+                        <small>mWh</small>
+                    </strong>
+
+                    <!-- CORRECTION PRINCIPALE -->
+                    <em>
+                        {% if energy.cycles_per_day %}
+                            {{ energy.cycles_per_day }} cycles/j
+                        {% else %}
+                            —
+                        {% endif %}
+                    </em>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <span>
+                        Puissance moyenne
+                    </span>
+
+                    <strong>
+                        {{ energy.average_power_mw|default:0|floatformat:3 }}
+                        <small>mW</small>
+                    </strong>
+
+                    <em>
+                        Courant moyen :
+                        {{ energy.current_average_ma|default:0|floatformat:3 }}
+                        mA
+                    </em>
+
+                </article>
+
+
+                <article class="kpi-card">
+
+                    <span>
+                        Puissance maximale
+                    </span>
+
+                    <strong>
+                        {{ energy.peak_power_mw|default:0|floatformat:3 }}
+                        <small>mW</small>
+                    </strong>
+
+                    <em>
+                        Pic :
+                        {{ energy.current_max_ma|default:0|floatformat:3 }}
+                        mA
+                    </em>
+
+                </article>
+
+            </div>
+
+
+            <div class="two-column-grid">
+
+
+                <article class="panel-card">
+
+                    <h3>
+                        Indicateurs électriques
+                    </h3>
+
+                    <div class="metrics-table">
+
+                        <div>
+                            <span>Courant minimum</span>
+                            <strong>
+                                {{ energy.current_min_ma|default:0|floatformat:3 }}
+                                mA
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Courant moyen</span>
+                            <strong>
+                                {{ energy.current_average_ma|default:0|floatformat:3 }}
+                                mA
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Courant maximum</span>
+                            <strong>
+                                {{ energy.current_max_ma|default:0|floatformat:3 }}
+                                mA
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Puissance moyenne</span>
+                            <strong>
+                                {{ energy.average_power_mw|default:0|floatformat:3 }}
+                                mW
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Puissance maximale</span>
+                            <strong>
+                                {{ energy.peak_power_mw|default:0|floatformat:3 }}
+                                mW
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Énergie par cycle</span>
+                            <strong>
+                                {{ energy.energy_cycle_mwh|default:0|floatformat:6 }}
+                                mWh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Énergie journalière</span>
+                            <strong>
+                                {{ energy.energy_daily_mwh|default:result.daily_energy_mwh|default:0|floatformat:3 }}
+                                mWh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Énergie mensuelle</span>
+                            <strong>
+                                {{ energy.energy_monthly_mwh|default:0|floatformat:3 }}
+                                mWh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Énergie annuelle</span>
+                            <strong>
+                                {{ energy.energy_yearly_mwh|default:0|floatformat:3 }}
+                                mWh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Durée du cycle</span>
+                            <strong>
+                                {{ energy.cycle_duration_ms|default:0|floatformat:0 }}
+                                ms
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel-card insight-card">
+
+                    <span class="insight-label">
+                        Analyse automatique
+                    </span>
+
+                    <p>
+                        {{ energy.summary|default:"Aucune synthèse énergétique disponible." }}
+                    </p>
+
+                    <div class="mini-tags">
+
+                        <span>
+                            {{ energy.profile_type|default:"Profil énergétique" }}
+                        </span>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- PROFIL CONSOMMATION -->
+        <!-- ========================= -->
+
+        <section class="dashboard-section" id="profile">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Profil temporel
+                    </span>
+
+                    <h2>
+                        Profil de consommation
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="chart-grid">
+
+
+                <article class="panel-card chart-card wide">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <h3>
+                                Courant en fonction du temps
+                            </h3>
+
+                            <p>
+                                Profil temporel détaillé des modes de fonctionnement
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="currentChart"></canvas>
+                    </div>
+
+                </article>
+
+
+                <article class="panel-card chart-card wide">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <h3>
+                                Zoom sur la phase active
+                            </h3>
+
+                            <p>
+                                Vue détaillée des pics de courant au début du cycle.
+                                Le graphique précédent conserve l’échelle temporelle complète.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="activeCurrentChart"></canvas>
+                    </div>
+
+                </article>
+
+
+                <article class="panel-card chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <h3>
+                                Puissance instantanée
+                            </h3>
+
+                            <p>
+                                Puissance consommée au cours du cycle
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="powerChart"></canvas>
+                    </div>
+
+                </article>
+
+
+                <article class="panel-card chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <h3>
+                                Énergie cumulée
+                            </h3>
+
+                            <p>
+                                Progression de l’énergie pendant un cycle
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="energyChart"></canvas>
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- DIMENSIONNEMENT -->
+        <!-- ========================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Évaluation technique
+                    </span>
+
+                    <h2>
+                        Dimensionnement du système
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="assessment-grid">
+
+
+                <!-- BATTERIE -->
+
+                <article class="assessment-card" id="battery">
+
+                    <div class="assessment-icon">
+                        🔋
+                    </div>
+
+                    <span class="assessment-label">
+                        Évaluation batterie
+                    </span>
+
+                    <h3>
+                        {{ battery.technology|default:"Non définie" }}
+                    </h3>
+
+                    <div class="assessment-values">
+
+                        <div>
+                            <span>Capacité</span>
+                            <strong>
+                                {{ battery.capacity_mah|default:0|floatformat:0 }}
+                                mAh
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Tension</span>
+                            <strong>
+                                {{ battery.voltage_v|default:0|floatformat:2 }}
+                                V
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Autonomie</span>
+                            <strong>
+                                {{ battery.autonomy_days|default:0|floatformat:2 }}
+                                jours
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Poids</span>
+                            <strong>
+                                {{ battery.weight_g|default:"—" }}
+                                g
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Coût</span>
+                            <strong>
+                                {% if battery.cost %}
+                                    ${{ battery.cost|floatformat:2 }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    <p>
+                        {{ battery.summary|default:"Aucune synthèse batterie disponible." }}
+                    </p>
+
+                </article>
+
+
+                <!-- SOLAIRE -->
+
+                <article class="assessment-card" id="solar">
+
+                    <div class="assessment-icon">
+                        ☀️
+                    </div>
+
+                    <span class="assessment-label">
+                        Évaluation solaire
+                    </span>
+
+                    <h3>
+                        {{ solar.technology|default:"Non défini" }}
+                    </h3>
+
+                    <div class="assessment-values">
+
+                        <div>
+                            <span>Puissance</span>
+                            <strong>
+                                {{ solar.panel_power_w|default:0|floatformat:2 }}
+                                W
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Tension</span>
+                            <strong>
+                                {{ solar.panel_voltage_v|default:0|floatformat:2 }}
+                                V
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Énergie/jour</span>
+                            <strong>
+                                {{ solar.estimated_daily_energy_wh|default:0|floatformat:3 }}
+                                Wh
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    <p>
+                        {{ solar.summary|default:"Aucune synthèse solaire disponible." }}
+                    </p>
+
+                </article>
+
+
+                <!-- ELECTRONIQUE -->
+
+                <article class="assessment-card" id="power">
+
+                    <div class="assessment-icon">
+                        ⚙️
+                    </div>
+
+                    <span class="assessment-label">
+                        Électronique de puissance
+                    </span>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;">
+
+                        <h3 style="margin:0;">
+                            Architecture de conversion
+                        </h3>
+
+                        {% if power.compatible %}
+
+                            <span style="display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; background:#dcfce7; color:#166534; font-size:12px; font-weight:700; white-space:nowrap;">
+                                Compatible
+                            </span>
+
+                        {% else %}
+
+                            <span style="display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:700; white-space:nowrap;">
+                                Non sélectionné
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                    <div class="assessment-values">
+
+                        <div>
+                            <span>Régulation requise</span>
+                            <strong>
+                                {{ power.regulator|default:"À sélectionner" }}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Conversion requise</span>
+                            <strong>
+                                {{ power.converter|default:"À sélectionner" }}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Protections</span>
+                            <strong>
+                                {{ power.protections|length }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    {% if not power.compatible %}
+
+                        <p style="margin:0 0 14px; color:#b91c1c; font-size:14px; font-weight:600;">
+                            Les fonctions nécessaires sont identifiées, mais aucun modèle commercial pleinement compatible n’a été retenu.
+                        </p>
+
+                    {% endif %}
+
+                    <p>
+                        {{ power.summary|default:"Aucune synthèse électronique disponible." }}
+                    </p>
+
+                </article>
+
+            </div>
+
+
+            <!-- ========================= -->
+            <!-- PVGIS -->
+            <!-- ========================= -->
+
+            {% if pvgis.available %}
+
+            <article
+                class="panel-card"
+                style="margin-top:24px; border-left:4px solid #f59e0b;">
+
+                <div
+                    style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px;">
+
+                    <div>
+
+                        <span class="section-kicker">
+                            Traçabilité des données solaires
+                        </span>
+
+                        <h3 style="margin:5px 0 0;">
+                            Données climatiques utilisées pour le dimensionnement
+                        </h3>
+
+                    </div>
+
+                    <span
+                        style="display:inline-flex; align-items:center; padding:7px 12px; border-radius:999px; background:#fff7ed; color:#c2410c; font-size:12px; font-weight:800;">
+
+                        Source : {{ pvgis.source }}
+
+                    </span>
+
+                </div>
+
+
+                <div
+                    style="display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:12px;">
+
+
+                    <div
+                        style="padding:14px; border-radius:14px; background:#f8fafc;">
+
+                        <span
+                            style="display:block; color:#64748b; font-size:13px; margin-bottom:6px;">
+
+                            Ensoleillement de dimensionnement
+
+                        </span>
+
+                        <strong style="font-size:20px;">
+
+                            {{ pvgis.sun_hours_worst|floatformat:2 }}
+                            h/jour
+
+                        </strong>
+
+                    </div>
+
+
+                    {% if pvgis.worst_month_label %}
+
+                    <div
+                        style="padding:14px; border-radius:14px; background:#f8fafc;">
+
+                        <span
+                            style="display:block; color:#64748b; font-size:13px; margin-bottom:6px;">
+
+                            Mois le plus défavorable
+
+                        </span>
+
+                        <strong style="font-size:20px;">
+
+                            {{ pvgis.worst_month_label }}
+
+                        </strong>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if pvgis.sun_hours_annual %}
+
+                    <div
+                        style="padding:14px; border-radius:14px; background:#f8fafc;">
+
+                        <span
+                            style="display:block; color:#64748b; font-size:13px; margin-bottom:6px;">
+
+                            Moyenne solaire annuelle
+
+                        </span>
+
+                        <strong style="font-size:20px;">
+
+                            {{ pvgis.sun_hours_annual|floatformat:2 }}
+                            h/jour
+
+                        </strong>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if pvgis.annual_irradiation_kwh_m2 %}
+
+                    <div
+                        style="padding:14px; border-radius:14px; background:#f8fafc;">
+
+                        <span
+                            style="display:block; color:#64748b; font-size:13px; margin-bottom:6px;">
+
+                            Irradiation annuelle
+
+                        </span>
+
+                        <strong style="font-size:20px;">
+
+                            {{ pvgis.annual_irradiation_kwh_m2|floatformat:1 }}
+                            kWh/m²
+
+                        </strong>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <p
+                    style="margin:16px 0 0; color:#64748b; font-size:13px;">
+
+                    Coordonnées utilisées :
+                    {{ pvgis.latitude|floatformat:4 }},
+                    {{ pvgis.longitude|floatformat:4 }}.
+
+                    Le panneau est dimensionné avec la valeur solaire
+                    la plus défavorable disponible.
+
+                    {% if not pvgis.metadata_complete %}
+
+                        Les métadonnées détaillées seront complétées
+                        après la mise à jour du workflow n8n.
+
+                    {% endif %}
+
+                </p>
+
+            </article>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- CYCLE DE VIE -->
+        <!-- ========================= -->
+
+        <section class="dashboard-section" id="lifecycle">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Projection à long terme
+                    </span>
+
+                    <h2>
+                        Évolution sur le cycle de vie
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="lifecycle-kpis">
+
+                <article>
+                    <span>Capacité finale</span>
+                    <strong>
+                        {{ lifecycle.final_battery_capacity_mah|default:0|floatformat:0 }}
+                        mAh
+                    </strong>
+                </article>
+
+                <article>
+                    <span>Autonomie finale</span>
+                    <strong>
+                        {{ lifecycle.final_autonomy_days|default:0|floatformat:2 }}
+                        jours
+                    </strong>
+                </article>
+
+                <article>
+                    <span>Puissance panneau finale</span>
+                    <strong>
+                        {{ lifecycle.final_panel_power_w|default:0|floatformat:2 }}
+                        W
+                    </strong>
+                </article>
+
+                <article>
+
+                    <span>
+                        Remplacement estimé
+                    </span>
+
+                    <strong>
+
+                        {% if lifecycle.estimated_battery_replacement_year %}
+
+                            Année
+                            {{ lifecycle.estimated_battery_replacement_year }}
+
+                        {% else %}
+
+                            Non requis
+
+                        {% endif %}
+
+                    </strong>
+
+                </article>
+
+            </div>
+
+
+            <div class="chart-grid">
+
+
+                <article class="panel-card chart-card wide">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <h3>
+                                Santé batterie et autonomie
+                            </h3>
+
+                            <p>
+                                Évolution de la capacité,
+                                de l’état de santé et de l’autonomie
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="lifecycleBatteryChart"></canvas>
+                    </div>
+
+                </article>
+
+
+                <article class="panel-card chart-card wide">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <h3>
+                                Dégradation du panneau solaire
+                            </h3>
+
+                            <p>
+                                Puissance disponible année après année
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="lifecycleSolarChart"></canvas>
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <article class="panel-card lifecycle-summary">
+
+                <h3>
+                    Conclusion du cycle de vie
+                </h3>
+
+                <p>
+                    {{ lifecycle.summary|default:"Aucune simulation de cycle de vie disponible." }}
+                </p>
+
+            </article>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- RECOMMANDATIONS -->
+        <!-- ========================= -->
+
+        <section
+            class="dashboard-section"
+            id="recommendations">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Aide à la décision
+                    </span>
+
+                    <h2>
+                        Recommandations et avertissements
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="two-column-grid">
+
+
+                <article class="panel-card">
+
+                    <div class="list-title">
+
+                        <span class="status-dot amber"></span>
+
+                        <h3>
+                            Recommandations
+                        </h3>
+
+                    </div>
+
+
+                    <div class="advice-list">
+
+                        {% for item in recommendations %}
+
+                            <div class="advice-item">
+
+                                <span>
+                                    {{ forloop.counter|stringformat:"02d" }}
+                                </span>
+
+                                <p>
+                                    {{ item }}
+                                </p>
+
+                            </div>
+
+                        {% empty %}
+
+                            <p class="muted">
+                                Aucune recommandation supplémentaire.
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel-card">
+
+                    <div class="list-title">
+
+                        <span class="status-dot red"></span>
+
+                        <h3>
+                            Avertissements importants
+                        </h3>
+
+                    </div>
+
+
+                    <div class="warning-list">
+
+                        {% for item in warnings %}
+
+                            <div class="warning-item">
+
+                                <span>!</span>
+
+                                <p>
+                                    {{ item }}
+                                </p>
+
+                            </div>
+
+                        {% empty %}
+
+                            <div class="empty-success">
+                                Aucun avertissement critique détecté.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- SCORE -->
+        <!-- ========================= -->
+
+        <section class="dashboard-section" id="score">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Évaluation multicritère
+                    </span>
+
+                    <h2>
+                        Évaluation globale
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="score-layout">
+
+
+                <article class="panel-card chart-card">
+
+                    <div class="chart-wrap radar-wrap">
+                        <canvas id="scoreRadarChart"></canvas>
+                    </div>
+
+                </article>
+
+
+                <article class="panel-card score-breakdown">
+
+                    <h3>
+                        Détail des scores
+                    </h3>
+
+
+                    <div class="score-row">
+
+                        <span>
+                            Efficacité énergétique
+                        </span>
+
+                        <strong>
+                            {{ score.energy_score|default:0|floatformat:1 }}%
+                        </strong>
+
+                    </div>
+
+                    <div class="score-progress">
+                        <i style="width: {{ score.energy_score|default:0 }}%"></i>
+                    </div>
+
+
+                    <div class="score-row">
+
+                        <span>
+                            Dimensionnement batterie
+                        </span>
+
+                        <strong>
+                            {{ score.battery_score|default:0|floatformat:1 }}%
+                        </strong>
+
+                    </div>
+
+                    <div class="score-progress">
+                        <i style="width: {{ score.battery_score|default:0 }}%"></i>
+                    </div>
+
+
+                    <div class="score-row">
+
+                        <span>
+                            Dimensionnement solaire
+                        </span>
+
+                        <strong>
+                            {{ score.solar_score|default:0|floatformat:1 }}%
+                        </strong>
+
+                    </div>
+
+                    <div class="score-progress">
+                        <i style="width: {{ score.solar_score|default:0 }}%"></i>
+                    </div>
+
+
+                    <div class="score-row">
+
+                        <span>
+                            Électronique de puissance
+                        </span>
+
+                        <strong>
+                            {{ score.power_score|default:0|floatformat:1 }}%
+                        </strong>
+
+                    </div>
+
+                    <div class="score-progress">
+                        <i style="width: {{ score.power_score|default:0 }}%"></i>
+                    </div>
+
+
+                    <div class="score-row">
+
+                        <span>
+                            Fiabilité
+                        </span>
+
+                        <strong>
+                            {{ score.reliability_score|default:0|floatformat:1 }}%
+                        </strong>
+
+                    </div>
+
+                    <div class="score-progress">
+                        <i style="width: {{ score.reliability_score|default:0 }}%"></i>
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <div class="score-explanation">
+
+                <h3>
+                    📊 Interprétation du score d'ingénierie
+                </h3>
+
+                <p>
+                    Le score d'ingénierie représente une évaluation multicritère
+                    de la conception du système IoT. Il combine l'efficacité énergétique,
+                    le dimensionnement batterie, le dimensionnement solaire,
+                    l'électronique de puissance et la fiabilité globale.
+                </p>
+
+                <ul>
+
+                    <li>
+                        ⚡ Score énergétique :
+                        analyse de la consommation et de l'efficacité
+                    </li>
+
+                    <li>
+                        🔋 Score batterie :
+                        capacité et autonomie estimée
+                    </li>
+
+                    <li>
+                        ☀️ Score solaire :
+                        dimensionnement photovoltaïque et disponibilité solaire
+                    </li>
+
+                    <li>
+                        ⚙️ Score électronique :
+                        régulation, conversion et protections
+                    </li>
+
+                    <li>
+                        🛡 Score fiabilité :
+                        robustesse globale du système
+                    </li>
+
+                </ul>
+
+
+                <p>
+                    <b>Interprétation :</b>
+                </p>
+
+
+                <ul>
+
+                    <li>
+                        90–100 : Conception excellente
+                    </li>
+
+                    <li>
+                        75–89 : Conception validée / très bonne
+                    </li>
+
+                    <li>
+                        60–74 : Prototype acceptable avec optimisations
+                    </li>
+
+                    <li>
+                        &lt;60 :
+                        Analyse nécessitant des optimisations ciblées
+                    </li>
+
+                </ul>
+
+
+                <small>
+                    Un score inférieur indique des axes d'amélioration
+                    et ne signifie pas nécessairement un échec du système.
+                </small>
+
+
+                <p>
+                    Ce score est un indicateur d'aide à la décision
+                    et ne remplace pas la validation expérimentale finale.
+                </p>
+
+            </div>
+
+
+            <div class="case-interpretation">
+
+                {% if score.interpretation %}
+
+                    <div class="ai-interpretation-content">
+                        {{ score.interpretation|safe }}
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- CONCLUSION IA -->
+        <!-- ========================= -->
+
+        <section
+            class="dashboard-section"
+            id="conclusion">
+
+            <article class="ai-conclusion-card">
+
+                <div class="ai-conclusion-icon">
+                    IA
+                </div>
+
+                <div>
+
+                    <span class="section-kicker">
+                        Synthèse AIDE-IoT
+                    </span>
+
+                    <h2>
+                        Conclusion de l’expert énergétique
+                    </h2>
+
+
+                    {% if executive_summary.summary %}
+
+                        <p>
+                            {{ executive_summary.summary }}
+                        </p>
+
+                    {% elif energy.summary %}
+
+                        <p>
+                            {{ energy.summary }}
+                        </p>
+
+                    {% else %}
+
+                        <p>
+                            L’analyse énergétique du projet est terminée.
+                            La consommation journalière estimée est de
+                            {{ energy.energy_daily_mwh|default:0|floatformat:3 }}
+                            mWh.
+                            Consultez les différentes sections du rapport
+                            pour les résultats détaillés.
+                        </p>
+
+                    {% endif %}
+
+
+                    {% if lifecycle.summary %}
+
+                        <p>
+                            {{ lifecycle.summary }}
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        {% endif %}
+
+    </section>
+
 </div>
+
+
+<!-- ========================= -->
+<!-- DONNEES GRAPHIQUES -->
+<!-- ========================= -->
+
+{{ chart_data_json|json_script:"dashboard-chart-data" }}
+
+
+<style>
+
+.score-explanation {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 15px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    line-height: 1.6;
+}
+
+.score-explanation h3 {
+    margin-bottom: 10px;
+}
+
+</style>
+
 {% endblock %}
 
-{% block extra_js %}
-<script>
-var curve = {{ curve_json|safe }};
-var states = {{ states_json|safe }};
 
-// BLOC 3 : Courbe LIGNE (PAS barres)
-if (curve.length > 0) {
-    new Chart(
-        document.getElementById('curveChart'),
-        {
-            type: 'line',
-            data: {
-                labels: curve.map(
-                    function(p) { return p[0]; }
-                ),
-                datasets: [{
-                    label: 'Courant (mA)',
-                    data: curve.map(
-                        function(p) { return p[1]; }
-                    ),
-                    borderColor: '#dc3545',
-                    backgroundColor:
-                        'rgba(220,53,69,0.1)',
-                    fill: true,
-                    stepped: true,
-                    pointRadius: 0,
-                    borderWidth: 2,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text:
-                            'Profil de consommation'
-                            + ' sur un cycle complet',
-                        font: { size: 16 }
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Temps (ms)'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Courant (mA)'
-                        }
-                    }
-                }
-            }
-        }
-    );
-}
+{% block extra_js %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'analyzer/css/dashboard.css' %}">
+
+<script
+    src="{% static 'analyzer/js/dashboard.js' %}">
 </script>
+
 {% endblock %}

@@ -1,0 +1,12 @@
+{% extends "analyzer/base.html" %}
+{% block title %}Nouvelle analyse — EnergyAI{% endblock %}
+{% block content %}
+<style>
+.wizard{max-width:1080px;margin:0 auto;padding:38px 0 70px}.wizard-top{display:flex;justify-content:space-between;gap:24px;align-items:end;margin-bottom:18px}.wizard-top h1{margin:5px 0 0;font-size:1.8rem;font-weight:800;letter-spacing:-.03em}.wizard-count{color:#64748b;font-size:.8rem}.progress{height:7px;background:#e2e8f0}.progress-bar{background:#2563eb}.wizard-card{margin-top:24px;padding:28px;border:1px solid #e2e8f0;border-radius:18px;background:#fff;box-shadow:0 14px 38px rgba(15,23,42,.06)}.wizard-card h2{font-size:1.2rem;font-weight:800}.wizard-help{color:#64748b;font-size:.86rem;line-height:1.65}.wizard-actions{display:flex;justify-content:space-between;gap:12px;margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0}.wizard-actions .btn{min-width:150px;font-weight:700}.errorlist{color:#dc2626;font-size:.78rem}.field-label{margin-bottom:6px;font-size:.8rem;font-weight:700}@media(max-width:650px){.wizard-top{align-items:start;flex-direction:column}.wizard-card{padding:20px}.wizard-actions{flex-direction:column-reverse}.wizard-actions .btn{width:100%}}
+</style>
+<main class="wizard">
+  <div class="wizard-top"><div><span class="text-primary small fw-bold text-uppercase">Analyse guidée</span><h1>{{ project.name|default:"Nouveau projet IoT" }}</h1></div><div class="wizard-count">Étape {{ wizard_current }} / {{ wizard_total }}</div></div>
+  <div class="progress" role="progressbar" aria-valuenow="{{ wizard_percent }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:{{ wizard_percent }}%"></div></div>
+  <section class="wizard-card">{% block wizard_content %}{% endblock %}</section>
+</main>
+{% endblock %}

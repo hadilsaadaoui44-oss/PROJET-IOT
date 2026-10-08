@@ -1,0 +1,24 @@
+{# Champ de formulaire réutilisable. Usage : {% include "analyzer/wizard/_energy_field.html" with field=battery_form.capacity_mah %} #}
+<div class="{{ col|default:'col-md-6' }}">
+    {% if field.field.widget.input_type == "checkbox" %}
+        <div class="form-check mt-4 pt-2">
+            {{ field }}
+            <label class="form-check-label fw-semibold" for="{{ field.id_for_label }}">
+                {{ field.label }}
+            </label>
+        </div>
+    {% else %}
+        <label class="form-label" for="{{ field.id_for_label }}">
+            {{ field.label }}
+        </label>
+        {{ field }}
+    {% endif %}
+
+    {% if field.help_text %}
+        <div class="form-text">{{ field.help_text }}</div>
+    {% endif %}
+
+    {% for error in field.errors %}
+        <div class="text-danger small mt-1">{{ error }}</div>
+    {% endfor %}
+</div>

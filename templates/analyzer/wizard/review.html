@@ -1,0 +1,429 @@
+{% extends "analyzer/wizard/base.html" %}
+
+{% block wizard_content %}
+
+<style>
+.review-card {
+    height: 100%;
+    padding: 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.review-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.review-head h3 {
+    margin: 0;
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+.edit-link {
+    font-size: .75rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.review-data {
+    margin: 0;
+    color: #64748b;
+    font-size: .82rem;
+    line-height: 1.65;
+}
+
+.review-table th {
+    font-size: .75rem;
+    color: #64748b;
+}
+
+.review-table td {
+    font-size: .8rem;
+    vertical-align: middle;
+}
+
+.mode-name {
+    font-weight: 700;
+}
+
+.review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.review-actions a {
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.file-available {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.file-unavailable {
+    color: #64748b;
+}
+</style>
+
+<h2>Vérification avant analyse</h2>
+
+<p class="wizard-help">
+    Contrôlez les informations ci-dessous. Utilisez « Modifier » pour revenir
+    directement à la section concernée. Le lancement peut prendre quelques
+    minutes car PVGIS, Agent 1 et Agent 2 sont interrogés.
+</p>
+
+<div class="row g-3 mt-1">
+
+    <div class="col-lg-4 col-md-6">
+        <article class="review-card">
+            <div class="review-head">
+                <h3>Projet et position</h3>
+
+                <a
+                    class="edit-link"
+                    href="{% url 'wizard_project_edit' project.id %}"
+                >
+                    Modifier
+                </a>
+            </div>
+
+            <p class="review-data">
+                <strong>{{ project.name }}</strong>
+                <br>
+
+                {{ project.location_city }},
+                {{ project.location_country }}
+                <br>
+
+                {% if project.latitude != None and project.longitude != None %}
+                    {{ project.latitude }},
+                    {{ project.longitude }}
+                    <br>
+                {% else %}
+                    <span class="text-danger">
+                        Coordonnées non renseignées
+                    </span>
+                    <br>
+                {% endif %}
+
+                {{ project.get_installation_type_display }}
+            </p>
+        </article>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <article class="review-card">
+            <div class="review-head">
+                <h3>Programme</h3>
+
+                <a
+                    class="edit-link"
+                    href="{% url 'wizard_firmware' project.id %}"
+                >
+                    Modifier
+                </a>
+            </div>
+
+            <p class="review-data">
+                {{ firmware.get_input_type_display }}
+
+                {% if firmware.source_code %}
+                    <br>
+                    Code source renseigné
+                {% endif %}
+
+                {% if firmware.code_file %}
+                    <br>
+                    Fichier :
+                    {{ firmware.code_file.name }}
+                {% endif %}
+
+                {% if firmware.flowchart %}
+                    <br>
+                    Organigramme renseigné
+                {% endif %}
+            </p>
+        </article>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <article class="review-card">
+            <div class="review-head">
+                <h3>Batterie et panneaux solaires</h3>
+
+                <a
+                    class="edit-link"
+                    href="{% url 'wizard_energy' project.id %}"
+                >
+                    Modifier
+                </a>
+            </div>
+
+            <p class="review-data">
+                Batterie :
+                {{ battery.get_battery_type_display }}
+
+                <br>
+
+                Autonomie demandée :
+                {{ battery.autonomy_days }}
+                jour{{ battery.autonomy_days|pluralize }}
+
+                <br>
+
+                Datasheet batterie :
+
+                {% if battery.battery_datasheet %}
+                    <a
+                        class="file-available"
+                        href="{{ battery.battery_datasheet.url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        PDF fourni
+                    </a>
+                {% else %}
+                    <span class="file-unavailable">
+                        Non fournie
+                    </span>
+                {% endif %}
+
+                <br>
+
+                Panneau :
+                {{ solar.get_panel_type_display }}
+
+                {% if solar.max_surface_cm2 %}
+                    <br>
+                    Surface maximale :
+                    {{ solar.max_surface_cm2 }} cm²
+                {% endif %}
+
+                {% if solar.max_budget %}
+                    <br>
+                    Budget solaire maximal :
+                    {{ solar.max_budget|floatformat:2 }}
+                {% endif %}
+            </p>
+        </article>
+    </div>
+
+</div>
+
+<div
+    class="d-flex flex-wrap align-items-center
+           justify-content-between gap-3 mt-4 mb-2"
+>
+    <h3 class="h6 fw-bold mb-0">
+        Composants et modes
+    </h3>
+
+    <div class="review-actions">
+        <a
+            class="btn btn-sm btn-outline-primary"
+            href="{% url 'wizard_mcu' project.id %}"
+        >
+            Modifier le MCU
+        </a>
+
+        <a
+            class="btn btn-sm btn-outline-primary"
+            href="{% url 'wizard_peripherals' project.id %}"
+        >
+            Modifier capteurs et communications
+        </a>
+
+        <a
+            class="btn btn-sm btn-outline-primary"
+            href="{% url 'wizard_actuators' project.id %}"
+        >
+            Modifier les actionneurs
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table review-table align-middle">
+        <thead>
+            <tr>
+                <th>Composant</th>
+                <th>Catégorie</th>
+                <th>Tension</th>
+                <th>Mode</th>
+                <th>Courant</th>
+                <th>Durée</th>
+                <th>Nb/cycle</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for component in components %}
+
+                {% for mode in component.modes.all %}
+                    <tr>
+                        {% if forloop.first %}
+                            <td rowspan="{{ component.modes.count|default:1 }}">
+                                <strong>{{ component.name }}</strong>
+                            </td>
+
+                            <td rowspan="{{ component.modes.count|default:1 }}">
+                                {% if component.category == 'mcu' %}
+                                    Microcontrôleur
+                                {% elif component.category == 'sensor' %}
+                                    Capteur
+                                {% elif component.category == 'communication' %}
+                                    Communication
+                                {% elif component.category == 'actuator' %}
+                                    Actionneur
+                                {% else %}
+                                    {{ component.get_category_display }}
+                                {% endif %}
+                            </td>
+
+                            <td rowspan="{{ component.modes.count|default:1 }}">
+                                {{ component.voltage|floatformat:3 }} V
+                            </td>
+                        {% endif %}
+
+                        <td class="mode-name">
+                            {{ mode.name }}
+                        </td>
+
+                        <td>
+                            {{ mode.current_ma|floatformat:4 }} mA
+                        </td>
+
+                        <td>
+                            {{ mode.duration_ms|floatformat:2 }} ms
+                        </td>
+
+                        <td>
+                            {{ mode.count_per_cycle }}
+                        </td>
+                    </tr>
+
+                {% empty %}
+                    <tr>
+                        <td>
+                            <strong>{{ component.name }}</strong>
+                        </td>
+
+                        <td>
+                            {% if component.category == 'mcu' %}
+                                Microcontrôleur
+                            {% else %}
+                                {{ component.get_category_display }}
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ component.voltage|floatformat:3 }} V
+                        </td>
+
+                        <td colspan="4" class="text-muted">
+                            Aucun mode manuel — analyse fondée sur le programme
+                        </td>
+                    </tr>
+                {% endfor %}
+
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="text-danger">
+                        Aucun composant enregistré.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<form method="post" action="{% url 'project_analyze' %}">
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="draft_id"
+        value="{{ project.id }}"
+    >
+
+    <input
+        type="hidden"
+        name="use_saved_components"
+        value="1"
+    >
+
+    <input
+        type="hidden"
+        name="name"
+        value="{{ project.name }}"
+    >
+
+    <input
+        type="hidden"
+        name="description"
+        value="{{ project.description }}"
+    >
+
+    <input
+        type="hidden"
+        name="location_city"
+        value="{{ project.location_city }}"
+    >
+
+    <input
+        type="hidden"
+        name="location_country"
+        value="{{ project.location_country }}"
+    >
+
+    <input
+        type="hidden"
+        name="latitude"
+        value="{{ project.latitude|default_if_none:'' }}"
+    >
+
+    <input
+        type="hidden"
+        name="longitude"
+        value="{{ project.longitude|default_if_none:'' }}"
+    >
+
+    <input
+        type="hidden"
+        name="installation_type"
+        value="{{ project.installation_type }}"
+    >
+
+    <input
+        type="hidden"
+        name="input_type"
+        value="{{ firmware.input_type }}"
+    >
+
+    <textarea hidden name="source_code">{{ firmware.source_code }}</textarea>
+
+    <div class="wizard-actions">
+        <a
+            class="btn btn-outline-secondary"
+            href="{% url 'wizard_energy' project.id %}"
+        >
+            Précédent
+        </a>
+
+        <button class="btn btn-success" type="submit">
+            Lancer l’analyse complète
+        </button>
+    </div>
+</form>
+
+{% endblock %}

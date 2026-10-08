@@ -1,0 +1,58 @@
+{% extends "analyzer/base.html" %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card shadow border-0">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h4 class="mb-0">📝 Créer un compte</h4>
+            </div>
+            
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            
+                            {% if field.help_text %}
+                                <small class="form-text text-muted d-block mt-1">
+                                    {{ field.help_text|safe }}
+                                </small>
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ field.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn btn-success w-100 mt-3 py-2">
+                        Créer mon compte
+                    </button>
+                </form>
+            </div>
+            
+            <div class="card-footer bg-light text-center py-3">
+                <span class="text-muted">Déjà inscrit ?</span>
+                <a href="{% url 'login' %}" class="fw-bold text-decoration-none text-success">Se connecter</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Ajoute le style Bootstrap aux champs du formulaire
+    document.querySelectorAll('input').forEach(input => {
+        if (input.type !== 'submit' && input.type !== 'hidden') {
+            input.classList.add('form-control');
+        }
+    });
+</script>
+{% endblock %}
