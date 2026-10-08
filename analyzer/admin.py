@@ -3,7 +3,8 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 from .models import (
     CustomUser, Project, Component,
-    ConsumptionMode, Firmware, AnalysisResult
+    ConsumptionMode, Firmware, AnalysisResult,
+    SolarPreference, BatteryPreference
 )
 
 
@@ -38,12 +39,22 @@ class FirmwareInline(admin.StackedInline):
     extra = 0
 
 
+class SolarPreferenceInline(admin.StackedInline):
+    model = SolarPreference
+    extra = 0
+
+
+class BatteryPreferenceInline(admin.StackedInline):
+    model = BatteryPreference
+    extra = 0
+
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['name', 'location_city', 'location_country', 'status', 'created_at']
-    list_filter = ['status', 'location_country']
+    list_display = ['name', 'location_city', 'location_country', 'installation_type', 'status', 'created_at']
+    list_filter = ['status', 'location_country', 'installation_type']
     search_fields = ['name', 'location_city']
-    inlines = [ComponentInline, FirmwareInline]
+    inlines = [ComponentInline, FirmwareInline, SolarPreferenceInline, BatteryPreferenceInline]
 
 
 class ConsumptionModeInline(admin.TabularInline):
@@ -57,6 +68,18 @@ class ComponentAdmin(admin.ModelAdmin):
     list_filter = ['category']
     search_fields = ['name']
     inlines = [ConsumptionModeInline]
+
+
+@admin.register(SolarPreference)
+class SolarPreferenceAdmin(admin.ModelAdmin):
+    list_display = ['project', 'panel_type', 'max_surface_cm2', 'max_budget']
+    list_filter = ['panel_type']
+
+
+@admin.register(BatteryPreference)
+class BatteryPreferenceAdmin(admin.ModelAdmin):
+    list_display = ['project', 'battery_type', 'autonomy_days', 'rechargeable_only']
+    list_filter = ['battery_type', 'rechargeable_only']
 
 
 @admin.register(AnalysisResult)

@@ -1,82 +1,923 @@
 {% extends "analyzer/base.html" %}
-{% block title %}Accueil — Assistant IoT{% endblock %}
+
+{% block title %}AIDE-IoT — Assistant Intelligent de Dimensionnement Énergétique{% endblock %}
+
+{% block extra_css %}
+<style>
+    .home-page {
+        overflow: hidden;
+    }
+
+    .hero {
+        padding: 56px 0 42px;
+        background:
+            radial-gradient(
+                circle at 78% 18%,
+                rgba(37, 99, 235, .15),
+                transparent 28%
+            ),
+            linear-gradient(180deg, #f8fbff, #f8fafc);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
+        gap: 64px;
+        align-items: center;
+    }
+
+    .eyebrow,
+    .label {
+        color: var(--primary);
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .13em;
+        text-transform: uppercase;
+    }
+
+    .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 17px;
+    }
+
+    .eyebrow::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--energy);
+        box-shadow: 0 0 0 5px rgba(245, 158, 11, .13);
+        content: "";
+    }
+
+    .hero h1 {
+        margin: 0;
+        font-size: clamp(2.35rem, 4.6vw, 4rem);
+        font-weight: 800;
+        letter-spacing: -.055em;
+        line-height: 1.02;
+    }
+
+    .hero h1 span {
+        color: var(--primary);
+    }
+
+    .hero-copy {
+        max-width: 680px;
+        margin: 22px 0 0;
+        color: #475569;
+        font-size: 1.07rem;
+        line-height: 1.7;
+    }
+
+    .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 27px;
+    }
+
+    .btn-main,
+    .btn-light {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: .78rem 1.25rem;
+        border-radius: 10px;
+        font-size: .92rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: .2s;
+    }
+
+    .btn-main {
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, .2);
+    }
+
+    .btn-light {
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--ink);
+    }
+
+    .btn-main:hover,
+    .btn-light:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-main:hover {
+        background: var(--primary-dark);
+        color: #fff;
+    }
+
+    .btn-light:hover {
+        color: var(--primary);
+    }
+
+    .session {
+        margin: 13px 0 0;
+        color: var(--muted);
+        font-size: .78rem;
+    }
+
+    .session strong {
+        color: var(--ink);
+    }
+
+    .report {
+        padding: 22px;
+        border: 1px solid rgba(226, 232, 240, .92);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, .96);
+        box-shadow: 0 28px 65px rgba(15, 23, 42, .13);
+    }
+
+    .report-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 17px;
+    }
+
+    .report-head h2 {
+        margin: 0;
+        font-size: .88rem;
+        font-weight: 800;
+    }
+
+    .valid {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: #ecfdf5;
+        color: #15803d;
+        font-size: .66rem;
+        font-weight: 700;
+    }
+
+    .valid::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #22c55e;
+        content: "";
+    }
+
+    .score {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 13px;
+        padding: 14px;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #172554, #1d4ed8);
+        color: #fff;
+    }
+
+    .score-ring {
+        display: grid;
+        width: 58px;
+        height: 58px;
+        place-items: center;
+        border: 3px solid rgba(255, 255, 255, .35);
+        border-radius: 50%;
+        font-size: .92rem;
+        font-weight: 800;
+    }
+
+    .score small {
+        display: block;
+        color: rgba(255, 255, 255, .62);
+        font-size: .64rem;
+    }
+
+    .score strong {
+        display: block;
+        margin-top: 3px;
+        font-size: .84rem;
+    }
+
+    .checks {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+    }
+
+    .check {
+        position: relative;
+        padding: 11px;
+        border: 1px solid #edf2f7;
+        border-radius: 11px;
+        background: #fbfdff;
+    }
+
+    .check::after {
+        position: absolute;
+        top: 11px;
+        right: 11px;
+        color: #16a34a;
+        font-weight: 800;
+        content: "✓";
+    }
+
+    .check small {
+        display: block;
+        color: var(--muted);
+        font-size: .62rem;
+    }
+
+    .check strong {
+        display: block;
+        max-width: 85%;
+        margin-top: 3px;
+        font-size: .73rem;
+    }
+
+    .report-foot {
+        margin: 13px 0 0;
+        color: var(--muted);
+        font-size: .67rem;
+        line-height: 1.5;
+    }
+
+    .cap-bar {
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .cap-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .cap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 17px 22px;
+    }
+
+    .cap + .cap {
+        border-left: 1px solid var(--border);
+    }
+
+    .cap b {
+        display: block;
+        font-size: .77rem;
+    }
+
+    .cap span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: .67rem;
+    }
+
+    .dot {
+        width: 9px;
+        height: 9px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+    }
+
+    .cap:nth-child(1) .dot {
+        background: #2563eb;
+    }
+
+    .cap:nth-child(2) .dot {
+        background: #16a34a;
+    }
+
+    .cap:nth-child(3) .dot {
+        background: #f59e0b;
+    }
+
+    .section {
+        padding: 70px 0;
+    }
+
+    .section.white {
+        background: #fff;
+        border-block: 1px solid var(--border);
+    }
+
+    .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+
+    .section-head > div {
+        max-width: 680px;
+    }
+
+    .section-head h2 {
+        margin: 8px 0 0;
+        font-size: clamp(1.65rem, 3vw, 2.3rem);
+        font-weight: 800;
+        letter-spacing: -.035em;
+    }
+
+    .section-head p {
+        max-width: 520px;
+        margin: 0;
+        color: var(--muted);
+        font-size: .88rem;
+        line-height: 1.7;
+    }
+
+    .workflow {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, .06);
+        overflow: hidden;
+    }
+
+    .step {
+        padding: 27px;
+    }
+
+    .step + .step {
+        border-left: 1px solid var(--border);
+    }
+
+    .step:nth-child(2) {
+        background: linear-gradient(180deg, #f8fbff, #fff);
+    }
+
+    .step-no {
+        display: inline-flex;
+        margin-bottom: 28px;
+        color: var(--primary);
+        font-size: .7rem;
+        font-weight: 800;
+        letter-spacing: .1em;
+    }
+
+    .step:nth-child(3) .step-no {
+        color: #15803d;
+    }
+
+    .step h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .step p {
+        margin: 9px 0 0;
+        color: var(--muted);
+        font-size: .79rem;
+        line-height: 1.65;
+    }
+
+    .architecture {
+        display: grid;
+        grid-template-columns: 1.05fr .95fr;
+        gap: 20px;
+    }
+
+    .architecture-main {
+        padding: 31px;
+        border-radius: 20px;
+        background: linear-gradient(145deg, #0f172a, #172554);
+        color: #fff;
+    }
+
+    .architecture-main h3 {
+        margin: 8px 0 12px;
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .architecture-main p {
+        margin: 0;
+        color: rgba(255, 255, 255, .65);
+        font-size: .84rem;
+        line-height: 1.75;
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 24px;
+    }
+
+    .tags span {
+        padding: 7px 10px;
+        border: 1px solid rgba(255, 255, 255, .14);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .07);
+        font-size: .66rem;
+    }
+
+    .tech-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .tech {
+        padding: 19px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: #fff;
+    }
+
+    .tech-code {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        margin-bottom: 17px;
+        border-radius: 10px;
+        font-size: .68rem;
+        font-weight: 800;
+    }
+
+    .tech:nth-child(1) .tech-code {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .tech:nth-child(2) .tech-code {
+        background: #fff7ed;
+        color: #ea580c;
+    }
+
+    .tech:nth-child(3) .tech-code {
+        background: #ecfdf5;
+        color: #15803d;
+    }
+
+    .tech:nth-child(4) .tech-code {
+        background: #fdf2f8;
+        color: #be185d;
+    }
+
+    .tech h3 {
+        margin: 0;
+        font-size: .84rem;
+        font-weight: 800;
+    }
+
+    .tech p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: .7rem;
+        line-height: 1.55;
+    }
+
+    .deliverables {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .deliverable {
+        padding: 18px;
+        border-left: 3px solid var(--primary);
+        border-radius: 5px 13px 13px 5px;
+        background: #fff;
+        box-shadow: 0 7px 22px rgba(15, 23, 42, .05);
+    }
+
+    .deliverable:nth-child(2) {
+        border-color: #16a34a;
+    }
+
+    .deliverable:nth-child(3) {
+        border-color: #f59e0b;
+    }
+
+    .deliverable:nth-child(4) {
+        border-color: #8b5cf6;
+    }
+
+    .deliverable b {
+        display: block;
+        font-size: .79rem;
+    }
+
+    .deliverable span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: .67rem;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 991.98px) {
+        .hero-grid,
+        .architecture {
+            grid-template-columns: 1fr;
+        }
+
+        .report {
+            max-width: 600px;
+        }
+
+        .section-head {
+            align-items: start;
+            flex-direction: column;
+        }
+
+        .workflow {
+            grid-template-columns: 1fr;
+        }
+
+        .step + .step {
+            border-top: 1px solid var(--border);
+            border-left: 0;
+        }
+
+        .deliverables {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .hero {
+            padding: 46px 0 34px;
+        }
+
+        .cap-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .cap + .cap {
+            border-top: 1px solid var(--border);
+            border-left: 0;
+        }
+
+        .section {
+            padding: 56px 0;
+        }
+
+        .tech-grid,
+        .deliverables {
+            grid-template-columns: 1fr;
+        }
+
+        .checks {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .hero-actions,
+        .btn-main,
+        .btn-light {
+            width: 100%;
+        }
+
+        .hero-grid {
+            gap: 34px;
+        }
+
+        .report {
+            padding: 18px;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<div class="home-page">
 
-<!-- HERO -->
-<div class="text-center py-5">
-    <div style="font-size:3.5rem">⚡</div>
-    <h1 class="fw-bold mt-2" style="font-size:2.8rem; color:#1a1a2e;">
-        Assistant Energetique IoT
-    </h1>
-    <p class="text-muted fs-5 mt-2">
-        Dimensionnez l'alimentation de vos devices IoT
-    </p>
+    <section class="hero">
+        <div class="container hero-grid">
 
-    {% if user.is_authenticated %}
-        <p class="fw-bold fs-5 mt-3" style="color:#0066ff;">
-            👋 Bienvenue, {{ user.display_name }} !
-        </p>
-        <a href="{% url 'project_create' %}"
-           class="btn btn-lg mt-2 px-5 py-2 fw-bold text-white"
-           style="background:#0066ff; border-radius:10px; font-size:1.1rem;">
-            ➕ Créer un Nouveau Projet
-        </a>
-    {% else %}
-        <a href="{% url 'login' %}"
-           class="btn btn-lg mt-3 px-5 py-2 fw-bold text-white"
-           style="background:#0066ff; border-radius:10px;">
-            🔑 Se connecter
-        </a>
-    {% endif %}
+            <div>
+                <div class="eyebrow">
+                    AIDE-IoT · Plateforme intelligente de dimensionnement énergétique IoT
+                </div>
+
+                <h1>
+                    Une énergie
+                    <span>fiable et intelligente</span>
+                    pour vos systèmes IoT.
+                </h1>
+
+                <p class="hero-copy">
+                    Analysez la consommation réelle de vos composants et
+                    dimensionnez une solution complète : batterie, panneau
+                    photovoltaïque, conversion et protections.
+                </p>
+
+                <div class="hero-actions">
+                    {% if user.is_authenticated %}
+
+                        <a class="btn-main" href="{% url 'workflow_intro' %}">
+                            Lancer une analyse énergétique
+                        </a>
+
+                        <a class="btn-light" href="{% url 'project_list' %}">
+                            Consulter mes projets
+                        </a>
+
+                    {% else %}
+
+                        <a class="btn-main" href="{% url 'register' %}">
+                            Créer un compte
+                        </a>
+
+                        <a class="btn-light" href="{% url 'login' %}">
+                            Se connecter
+                        </a>
+
+                    {% endif %}
+                </div>
+
+                {% if user.is_authenticated %}
+                    <p class="session">
+                        Session active ·
+                        <strong>{{ user.display_name|default:user.username }}</strong>
+                    </p>
+                {% endif %}
+            </div>
+
+            <aside class="report">
+                <div class="report-head">
+                    <h2>Rapport d’ingénierie</h2>
+                    <span class="valid">Analyse validée</span>
+                </div>
+
+                <div class="score">
+                    <span class="score-ring">80/100</span>
+
+                    <span>
+                        <small>Évaluation technique</small>
+                        <strong>Solution techniquement validée</strong>
+                    </span>
+                </div>
+
+                <div class="checks">
+                    <div class="check">
+                        <small>Énergie</small>
+                        <strong>Profil calculé</strong>
+                    </div>
+
+                    <div class="check">
+                        <small>Autonomie</small>
+                        <strong>Batterie adaptée</strong>
+                    </div>
+
+                    <div class="check">
+                        <small>Panneau solaire</small>
+                        <strong>PVGIS intégré</strong>
+                    </div>
+
+                    <div class="check">
+                        <small>Puissance</small>
+                        <strong>Chaîne protégée</strong>
+                    </div>
+                </div>
+
+                <p class="report-foot">
+                    Résultats traçables, recommandations techniques et export
+                    PDF professionnel.
+                </p>
+            </aside>
+
+        </div>
+    </section>
+
+    <div class="cap-bar">
+        <div class="container cap-grid">
+
+            <div class="cap">
+                <i class="dot"></i>
+                <div>
+                    <b>Analyse multi-composants</b>
+                    <span>Modes actifs et basse consommation</span>
+                </div>
+            </div>
+
+            <div class="cap">
+                <i class="dot"></i>
+                <div>
+                    <b>Dimensionnement complet</b>
+                    <span>Batterie, solaire et électronique de puissance</span>
+                </div>
+            </div>
+
+            <div class="cap">
+                <i class="dot"></i>
+                <div>
+                    <b>Rapport vérifiable</b>
+                    <span>Calculs, sources et recommandations</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <section class="section">
+        <div class="container">
+
+            <div class="section-head">
+                <div>
+                    <span class="label">Parcours d’analyse</span>
+                    <h2>Trois étapes pour une décision technique claire</h2>
+                </div>
+
+                <p>
+                    Le parcours guide l’utilisateur depuis la description du
+                    système jusqu’au dimensionnement de son alimentation.
+                </p>
+            </div>
+
+            <div class="workflow">
+
+                <article class="step">
+                    <span class="step-no">ÉTAPE 01</span>
+                    <h3>Décrire le système</h3>
+                    <p>
+                        Localisation, composants, modes de fonctionnement et
+                        programme embarqué.
+                    </p>
+                </article>
+
+                <article class="step">
+                    <span class="step-no">ÉTAPE 02</span>
+                    <h3>Analyser et calculer</h3>
+                    <p>
+                        Interprétation du firmware, profil énergétique et
+                        données solaires vérifiées.
+                    </p>
+                </article>
+
+                <article class="step">
+                    <span class="step-no">ÉTAPE 03</span>
+                    <h3>Dimensionner la solution</h3>
+                    <p>
+                        Batterie, panneau photovoltaïque, conversion et
+                        protections.
+                    </p>
+                </article>
+
+            </div>
+
+            <div class="text-center mt-4">
+                <a class="btn-light" href="{% url 'workflow_intro' %}">
+                    Voir le détail du parcours →
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="section white">
+        <div class="container">
+
+            <div class="section-head">
+                <div>
+                    <span class="label">Architecture prise en charge</span>
+                    <h2>Conçue pour les systèmes IoT réels</h2>
+                </div>
+
+                <p>
+                    Chaque composant conserve ses propres modes afin de
+                    représenter correctement les cycles, les pointes de courant
+                    et les phases de veille.
+                </p>
+            </div>
+
+            <div class="architecture">
+
+                <div class="architecture-main">
+                    <span class="label">Modèle énergétique flexible</span>
+
+                    <h3>
+                        Du microampère de veille au pic de transmission
+                    </h3>
+
+                    <p>
+                        La plateforme analyse les activités du système, calcule
+                        son courant global et dimensionne la chaîne
+                        d’alimentation en fonction des contraintes électriques
+                        réelles.
+                    </p>
+
+                    <div class="tags">
+                        <span>Deep Sleep</span>
+                        <span>Stop Mode</span>
+                        <span>TX / RX</span>
+                        <span>Mesure</span>
+                        <span>PWM</span>
+                        <span>Charges séparées</span>
+                    </div>
+                </div>
+
+                <div class="tech-grid">
+
+                    <article class="tech">
+                        <span class="tech-code">MCU</span>
+                        <h3>Microcontrôleurs</h3>
+                        <p>
+                            LoRa-E5, ESP32, STM32, Arduino et architectures
+                            similaires.
+                        </p>
+                    </article>
+
+                    <article class="tech">
+                        <span class="tech-code">RF</span>
+                        <h3>Communications</h3>
+                        <p>
+                            LoRa, Wi-Fi, Bluetooth Low Energy, GSM et autres
+                            liaisons.
+                        </p>
+                    </article>
+
+                    <article class="tech">
+                        <span class="tech-code">SEN</span>
+                        <h3>Capteurs</h3>
+                        <p>
+                            Mesure environnementale, agricole ou industrielle,
+                            notamment le BME688.
+                        </p>
+                    </article>
+
+                    <article class="tech">
+                        <span class="tech-code">ACT</span>
+                        <h3>Actionneurs</h3>
+                        <p>
+                            Relais, moteurs, éclairage et autres charges
+                            commandées.
+                        </p>
+                    </article>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+
+            <div class="section-head">
+                <div>
+                    <span class="label">Contenu du rapport</span>
+                    <h2>Des résultats directement exploitables</h2>
+                </div>
+
+                <p>
+                    Le rapport rassemble les indicateurs essentiels pour
+                    vérifier la faisabilité et guider la mise en œuvre du
+                    système.
+                </p>
+            </div>
+
+            <div class="deliverables">
+
+                <div class="deliverable">
+                    <b>Bilan énergétique</b>
+                    <span>
+                        Courants, puissances, énergie et profil temporel.
+                    </span>
+                </div>
+
+                <div class="deliverable">
+                    <b>Solution d’alimentation</b>
+                    <span>
+                        Batterie, autonomie, capacité et vieillissement.
+                    </span>
+                </div>
+
+                <div class="deliverable">
+                    <b>Étude solaire</b>
+                    <span>
+                        Panneau photovoltaïque et données climatiques PVGIS.
+                    </span>
+                </div>
+
+                <div class="deliverable">
+                    <b>Validation technique</b>
+                    <span>
+                        Score, risques, protections et recommandations.
+                    </span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
 </div>
-
-<!-- SÉPARATEUR -->
-<hr style="border-color:#e0e0e0; margin: 1rem 0 2rem 0;">
-
-<!-- 3 ÉTAPES -->
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card step-card h-100 text-center p-4">
-            <div class="step-icon">📤</div>
-            <h5 class="fw-bold" style="color:#1a1a2e;">1. Upload</h5>
-            <p class="text-muted small">Datasheets + Code source + Localisation</p>
-            <div class="mt-auto pt-3">
-                <span class="badge px-3 py-2"
-                      style="background:#e8f0ff; color:#0066ff; border-radius:6px;">
-                    PDF · INO · PY
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card step-card h-100 text-center p-4">
-            <div class="step-icon">🔬</div>
-            <h5 class="fw-bold" style="color:#1a1a2e;">2. Analyse IA</h5>
-            <p class="text-muted small">6 modes de consommation via n8n + Gemini</p>
-            <div class="mt-auto pt-3">
-                <span class="badge px-3 py-2"
-                      style="background:#fff3e0; color:#f39c12; border-radius:6px;">
-                    n8n · Gemini · RAG
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card step-card h-100 text-center p-4">
-            <div class="step-icon">🌞</div>
-            <h5 class="fw-bold" style="color:#1a1a2e;">3. Résultat</h5>
-            <p class="text-muted small">Batterie + Adaptateur + Panneau solaire</p>
-            <div class="mt-auto pt-3">
-                <span class="badge px-3 py-2"
-                      style="background:#e8f5e9; color:#27ae60; border-radius:6px;">
-                    mAh · Wh · kWc
-                </span>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% endblock %}

@@ -1,0 +1,474 @@
+{% extends "analyzer/base.html" %}
+
+{% block title %}Nouveau Projet{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">➕ Nouveau Projet</h2>
+
+<div class="card mb-4 border-info">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">💡 Comment fournir les données ?</h5>
+    </div>
+    <div class="card-body">
+        <p class="mb-3">
+            Pour analyser votre projet, il nous faut <strong>2 types d'informations</strong> :
+        </p>
+        <div class="mb-3">
+            <h6 class="fw-bold text-primary">1️⃣ COMMENT le système fonctionne</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="alert alert-success h-100 mb-0">
+                        <strong>🅰️ Modes manuels</strong>
+                        <p class="small mb-0 mt-1">Vous saisissez les modes de chaque composant.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-warning h-100 mb-0">
+                        <strong>🅱️ Code source</strong>
+                        <p class="small mb-0 mt-1">L'IA analyse votre code (.ino, .py, .cpp).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <h6 class="fw-bold text-primary">2️⃣ COMBIEN ça consomme</h6>
+            <div class="alert alert-primary mb-0">
+                <strong>📄 Datasheet PDF</strong> — Extrait les valeurs exactes. 
+                <strong>Valeur utilisateur > datasheet > warning.</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- 1. LOCALISATION -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">📍 1. Localisation & Installation</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold">Nom du projet *</label>
+                    {{ form.name }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold">Description</label>
+                    {{ form.description }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="fw-bold">Ville *</label>
+                    {{ form.location_city }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="fw-bold">Pays *</label>
+                    {{ form.location_country }}
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label>Latitude</label>
+                    {{ form.latitude }}
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label>Longitude</label>
+                    {{ form.longitude }}
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="fw-bold">🏠 Installation *</label>
+                    {{ form.installation_type }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2A. PANNEAU SOLAIRE -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">☀️ 2A. Préférences Panneau Solaire</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="fw-bold">Technologie préférée</label>
+                    {{ solar_form.panel_type }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="fw-bold">Surface max (cm²)</label>
+                    {{ solar_form.max_surface_cm2 }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="fw-bold">Budget max</label>
+                    {{ solar_form.max_budget }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2B. BATTERIE -->
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background: #6f42c1;">
+            <h5 class="mb-0">🔋 2B. Préférences Batterie</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="fw-bold">Type de batterie</label>
+                    {{ battery_form.battery_type }}
+                    <small class="text-muted d-block mt-1">L'assistant proposera le meilleur choix</small>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="fw-bold">Autonomie</label>
+                    {{ battery_form.autonomy_days }}
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="fw-bold">Poids max (g)</label>
+                    {{ battery_form.max_weight_g }}
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="fw-bold">Volume max (cm³)</label>
+                    {{ battery_form.max_volume_cm3 }}
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="fw-bold">Budget max</label>
+                    {{ battery_form.max_budget }}
+                </div>
+            </div>
+            <div class="form-check mt-2">
+                {{ battery_form.rechargeable_only }}
+                <label class="form-check-label fw-bold">🔄 Rechargeable uniquement</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MCU -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">📡 3. Microcontrôleur (MCU)</h5>
+        </div>
+        <div class="card-body">
+            <div id="mcuContainer">
+                <div class="mcu-row card mb-3 border-success">
+                    <div class="card-header bg-light">
+                        <div class="row align-items-end">
+                            <div class="col-md-3">
+                                <label class="fw-bold">Nom *</label>
+                                <div class="mcu-name-wrapper">
+                                    <select class="form-select mcu-model-select" required>
+                                        <option value="" selected disabled>Choisir une carte</option>
+                                        <optgroup label="Seeed Studio et LoRa">
+                                            <option value="LoRa-E5 Dev Board">LoRa-E5 Dev Board</option>
+                                            <option value="Wio-E5 Dev Board">Wio-E5 Dev Board</option>
+                                            <option value="STM32WLE5JC">STM32WLE5JC</option>
+                                            <option value="B-L072Z-LRWAN1">B-L072Z-LRWAN1</option>
+                                            <option value="Heltec WiFi LoRa 32 V3">Heltec WiFi LoRa 32 V3</option>
+                                            <option value="TTGO LoRa32">TTGO LoRa32</option>
+                                            <option value="RAK WisBlock RAK4631">RAK WisBlock RAK4631</option>
+                                        </optgroup>
+                                        <optgroup label="Espressif">
+                                            <option value="ESP32 DevKit V1">ESP32 DevKit V1</option>
+                                            <option value="ESP32-WROOM-32">ESP32-WROOM-32</option>
+                                            <option value="ESP32-S3 DevKitC-1">ESP32-S3 DevKitC-1</option>
+                                            <option value="ESP32-C3 DevKitM-1">ESP32-C3 DevKitM-1</option>
+                                            <option value="ESP8266 NodeMCU">ESP8266 NodeMCU</option>
+                                        </optgroup>
+                                        <optgroup label="STMicroelectronics">
+                                            <option value="STM32 Nucleo-L073RZ">STM32 Nucleo-L073RZ</option>
+                                            <option value="STM32 Nucleo-L476RG">STM32 Nucleo-L476RG</option>
+                                            <option value="STM32 Nucleo-WL55JC">STM32 Nucleo-WL55JC</option>
+                                            <option value="STM32F4 Discovery">STM32F4 Discovery</option>
+                                        </optgroup>
+                                        <optgroup label="Arduino">
+                                            <option value="Arduino Uno R3">Arduino Uno R3</option>
+                                            <option value="Arduino Nano">Arduino Nano</option>
+                                            <option value="Arduino Nano 33 IoT">Arduino Nano 33 IoT</option>
+                                            <option value="Arduino MKR WAN 1310">Arduino MKR WAN 1310</option>
+                                            <option value="Arduino Portenta H7">Arduino Portenta H7</option>
+                                        </optgroup>
+                                        <optgroup label="Nordic Semiconductor">
+                                            <option value="Nordic nRF52840 DK">Nordic nRF52840 DK</option>
+                                            <option value="Nordic nRF5340 DK">Nordic nRF5340 DK</option>
+                                        </optgroup>
+                                        <optgroup label="Raspberry Pi et autres cartes">
+                                            <option value="Raspberry Pi Pico">Raspberry Pi Pico</option>
+                                            <option value="Raspberry Pi Pico W">Raspberry Pi Pico W</option>
+                                            <option value="Teensy 4.1">Teensy 4.1</option>
+                                            <option value="BBC micro:bit V2">BBC micro:bit V2</option>
+                                            <option value="Particle Boron">Particle Boron</option>
+                                        </optgroup>
+                                        <option value="__other__">Autre carte (saisie libre)</option>
+                                    </select>
+                                    <input type="text" class="form-control mt-2 mcu-custom-name d-none" placeholder="Saisir le nom exact de la carte">
+                                    <input type="hidden" class="mcu-name-value" name="mcu_name_0">
+                                    <small class="text-muted d-block mt-1">Choisissez un modèle ou sélectionnez « Autre carte ».</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label>Tension (V)</label>
+                                <input type="number" step="0.1" class="form-control" name="mcu_voltage_0" placeholder="3.3">
+                            </div>
+                            <div class="col-md-2">
+                                <label>Courant (mA)</label>
+                                <input type="number" step="0.01" class="form-control" name="mcu_nominal_0" placeholder="80">
+                            </div>
+                            <div class="col-md-2">
+                                <label>Nb cœurs</label>
+                                <input type="number" class="form-control" name="mcu_cores_0" placeholder="2">
+                            </div>
+                            <div class="col-md-3">
+                                <label>📄 Datasheet</label>
+                                <input type="file" class="form-control" name="mcu_datasheet_0" accept=".pdf">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label class="small">Fréq. min (MHz)</label>
+                                <input type="number" class="form-control form-control-sm" name="mcu_fmin_0" placeholder="80">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small">Fréq. max (MHz)</label>
+                                <input type="number" class="form-control form-control-sm" name="mcu_fmax_0" placeholder="240">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small">Fréq. utilisée</label>
+                                <input type="number" class="form-control form-control-sm" name="mcu_fused_0" placeholder="160">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button" class="btn btn-outline-danger btn-sm w-100 delMcu">❌ Retirer</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-success fw-bold">⚡ Modes <small class="text-muted fw-normal">(obligatoire si pas de code)</small></h6>
+                        <div class="modes-container" data-comp-idx="0" data-category="mcu">
+                            <div class="row mb-1 text-muted small">
+                                <div class="col-md-3">Mode</div><div class="col-md-2">Courant</div><div class="col-md-2">Durée</div><div class="col-md-2">Nb/cycle</div>
+                            </div>
+                            <div class="mode-row row mb-2">
+                                <div class="col-md-3"><input type="text" class="form-control form-control-sm" name="mcu_mode_name_0_0" placeholder="Ex: Deep Sleep"></div>
+                                <div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="0.001" class="form-control" name="mcu_mode_current_0_0" placeholder="mA"><span class="input-group-text">mA</span></div></div>
+                                <div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="1" class="form-control" name="mcu_mode_duration_0_0" placeholder="ms"><span class="input-group-text">ms</span></div></div>
+                                <div class="col-md-2"><input type="number" min="0" class="form-control form-control-sm" name="mcu_mode_count_0_0" value="1"></div>
+                                <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger delMode">✕</button></div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success addMode mt-1" data-category="mcu">➕ Ajouter un mode</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-success w-100" id="addMcu">➕ Ajouter un microcontrôleur</button>
+        </div>
+    </div>
+
+    <!-- 4. SENSORS -->
+    <div class="card mb-4">
+        <div class="card-header text-white" style="background: #17a2b8;">
+            <h5 class="mb-0">🌡️ 4. Sensors (Capteurs)</h5>
+        </div>
+        <div class="card-body">
+            <div id="sensorContainer">
+                <div class="sensor-row card mb-3" style="border-color: #17a2b8;">
+                    <div class="card-header bg-light">
+                        <div class="row align-items-end">
+                            <div class="col-md-4"><label class="fw-bold">Nom *</label><input type="text" class="form-control" name="sensor_name_0" placeholder="Ex: DHT22"></div>
+                            <div class="col-md-2"><label>Tension (V)</label><input type="number" step="0.1" class="form-control" name="sensor_voltage_0" placeholder="3.3"></div>
+                            <div class="col-md-4"><label>📄 Datasheet</label><input type="file" class="form-control" name="sensor_datasheet_0" accept=".pdf"></div>
+                            <div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm w-100 delSensor">❌ Retirer</button></div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 style="color:#17a2b8" class="fw-bold">⚡ Modes</h6>
+                        <div class="modes-container" data-comp-idx="0" data-category="sensor">
+                            <div class="row mb-1 text-muted small"><div class="col-md-3">Mode</div><div class="col-md-2">Courant</div><div class="col-md-2">Durée</div><div class="col-md-2">Nb/cycle</div></div>
+                            <div class="mode-row row mb-2">
+                                <div class="col-md-3"><input type="text" class="form-control form-control-sm" name="sensor_mode_name_0_0" placeholder="Measuring"></div>
+                                <div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="0.001" class="form-control" name="sensor_mode_current_0_0" placeholder="mA"><span class="input-group-text">mA</span></div></div>
+                                <div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="1" class="form-control" name="sensor_mode_duration_0_0" placeholder="ms"><span class="input-group-text">ms</span></div></div>
+                                <div class="col-md-2"><input type="number" min="0" class="form-control form-control-sm" name="sensor_mode_count_0_0" value="1"></div>
+                                <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger delMode">✕</button></div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-info addMode mt-1" data-category="sensor">➕ Ajouter un mode</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn w-100 text-white" style="background: #17a2b8;" id="addSensor">➕ Ajouter un capteur</button>
+        </div>
+    </div>
+
+    <!-- 5. ACTUATORS -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">⚙️ 5. Actuators (Actionneurs)</h5>
+        </div>
+        <div class="card-body">
+            <div id="actuatorContainer">
+                <div class="actuator-row card mb-3 border-danger">
+                    <div class="card-header bg-light">
+                        <div class="row align-items-end">
+                            <div class="col-md-3"><label class="fw-bold">Nom *</label><input type="text" class="form-control" name="actuator_name_0" placeholder="Ex: Relais"></div>
+                            <div class="col-md-2"><label>Tension (V)</label><input type="number" step="0.1" class="form-control" name="actuator_voltage_0" placeholder="5"></div>
+                            <div class="col-md-3"><label>📄 Datasheet</label><input type="file" class="form-control" name="actuator_datasheet_0" accept=".pdf"></div>
+                            <div class="col-md-2"><label>Alim. séparée ?</label><div class="form-check mt-2"><input type="checkbox" class="form-check-input" name="actuator_seppower_0"><label class="form-check-label">Oui</label></div></div>
+                            <div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm w-100 delActuator">❌ Retirer</button></div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-danger fw-bold">⚡ Modes</h6>
+                        <div class="modes-container" data-comp-idx="0" data-category="actuator">
+                            <div class="row mb-1 text-muted small"><div class="col-md-3">Mode</div><div class="col-md-2">Courant</div><div class="col-md-2">Durée</div><div class="col-md-2">Nb/cycle</div></div>
+                            <div class="mode-row row mb-2">
+                                <div class="col-md-3"><input type="text" class="form-control form-control-sm" name="actuator_mode_name_0_0" placeholder="ON"></div>
+                                <div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="0.001" class="form-control" name="actuator_mode_current_0_0" placeholder="mA"><span class="input-group-text">mA</span></div></div>
+                                <div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="1" class="form-control" name="actuator_mode_duration_0_0" placeholder="ms"><span class="input-group-text">ms</span></div></div>
+                                <div class="col-md-2"><input type="number" min="0" class="form-control form-control-sm" name="actuator_mode_count_0_0" value="1"></div>
+                                <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger delMode">✕</button></div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger addMode mt-1" data-category="actuator">➕ Ajouter un mode</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-danger w-100" id="addActuator">➕ Ajouter un actionneur</button>
+        </div>
+    </div>
+
+    <!-- 6. PROGRAMME -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">💻 6. Programme</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3"><label class="fw-bold">Type</label>{{ firm_form.input_type }}</div>
+            <div id="codeSection">
+                <div class="mb-3"><label>Code source</label>{{ firm_form.source_code }}</div>
+                <div class="mb-3"><label>Ou fichier</label>{{ firm_form.code_file }}</div>
+            </div>
+            <div id="flowSection" style="display:none;"><label>Organigramme</label>{{ firm_form.flowchart }}</div>
+        </div>
+    </div>
+
+    <!-- 7. ÉTAT -->
+    <div class="card mb-4" id="sourcesIndicator">
+        <div class="card-header bg-light">
+            <h6 class="fw-bold mb-0">📋 État de votre saisie</h6>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6"><div id="sourceA" class="alert alert-secondary mb-0"><strong>🅰️ Modes</strong> : ⏳</div></div>
+                <div class="col-md-6"><div id="sourceB" class="alert alert-secondary mb-0"><strong>🅱️ Code</strong> : ⏳</div></div>
+            </div>
+            <div id="sourceC" class="alert alert-secondary mb-0"><strong>📄 Datasheets</strong> : ⏳</div>
+            <div id="statusMessage" class="alert alert-danger mt-3 mb-0">❌ Sources manquantes</div>
+        </div>
+    </div>
+
+    <div class="text-center mb-5">
+        <button type="submit" class="btn btn-lg btn-primary px-5 py-3" id="submitBtn" disabled>🔬 Lancer l'Analyse</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var counters = {mcu:1, sensor:1, actuator:1};
+
+function syncMcuName(wrapper){
+    if(!wrapper)return;
+    var select=wrapper.querySelector('.mcu-model-select');
+    var custom=wrapper.querySelector('.mcu-custom-name');
+    var value=wrapper.querySelector('.mcu-name-value');
+    if(!select||!custom||!value)return;
+
+    if(select.value==='__other__'){
+        custom.classList.remove('d-none');
+        custom.required=true;
+        value.value=custom.value.trim();
+    }else{
+        custom.classList.add('d-none');
+        custom.required=false;
+        custom.value='';
+        value.value=select.value;
+    }
+}
+
+function initializeMcuSelectors(root){
+    (root||document).querySelectorAll('.mcu-name-wrapper').forEach(function(wrapper){
+        syncMcuName(wrapper);
+    });
+}
+
+document.getElementById('inputType').addEventListener('change', function(){
+    document.getElementById('codeSection').style.display = this.value==='code'?'block':'none';
+    document.getElementById('flowSection').style.display = this.value==='code'?'none':'block';
+});
+
+function checkSources(){
+    var hasModes=false;
+    document.querySelectorAll('input[name*="_mode_current_"]').forEach(function(el){if(el.value&&parseFloat(el.value)>0)hasModes=true;});
+    var sc=document.querySelector('textarea[name="source_code"]');
+    var cf=document.querySelector('input[name="code_file"]');
+    var hasCode=(sc&&sc.value.trim().length>10)||(cf&&cf.files&&cf.files.length>0);
+    var hasDS=false,dsc=0;
+    document.querySelectorAll('input[type="file"][name*="_datasheet_"]').forEach(function(el){if(el.files&&el.files.length>0){hasDS=true;dsc++;}});
+    var sA=document.getElementById('sourceA'),sB=document.getElementById('sourceB'),sC=document.getElementById('sourceC'),st=document.getElementById('statusMessage'),btn=document.getElementById('submitBtn');
+    sA.className=hasModes?'alert alert-success mb-0':'alert alert-secondary mb-0';
+    sA.innerHTML='<strong>🅰️ Modes</strong> : '+(hasModes?'✅ Saisis':'⏳ Aucun');
+    sB.className=hasCode?'alert alert-success mb-0':'alert alert-secondary mb-0';
+    sB.innerHTML='<strong>🅱️ Code</strong> : '+(hasCode?'✅ Fourni':'⏳ Non');
+    sC.className=hasDS?'alert alert-info mb-0':'alert alert-secondary mb-0';
+    sC.innerHTML='<strong>📄 Datasheets</strong> : '+(hasDS?'✅ '+dsc+' fournie(s)':'⏳ Aucune');
+    if(hasModes||hasCode){st.className='alert alert-success mt-3 mb-0';st.innerHTML='✅ <strong>Prêt.</strong>';btn.disabled=false;}
+    else{st.className='alert alert-danger mt-3 mb-0';st.innerHTML='❌ <strong>Sources manquantes</strong>';btn.disabled=true;}
+}
+
+document.addEventListener('click',function(e){
+    if(e.target.classList.contains('addMode')){
+        var cat=e.target.dataset.category,card=e.target.closest('.card'),cont=card.querySelector('.modes-container'),ci=cont.dataset.compIdx,mi=cont.querySelectorAll('.mode-row').length;
+        cont.insertAdjacentHTML('beforeend','<div class="mode-row row mb-2"><div class="col-md-3"><input type="text" class="form-control form-control-sm" name="'+cat+'_mode_name_'+ci+'_'+mi+'" placeholder="Mode"></div><div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="0.001" class="form-control" name="'+cat+'_mode_current_'+ci+'_'+mi+'" placeholder="mA"><span class="input-group-text">mA</span></div></div><div class="col-md-2"><div class="input-group input-group-sm"><input type="number" step="1" class="form-control" name="'+cat+'_mode_duration_'+ci+'_'+mi+'" placeholder="ms"><span class="input-group-text">ms</span></div></div><div class="col-md-2"><input type="number" min="0" class="form-control form-control-sm" name="'+cat+'_mode_count_'+ci+'_'+mi+'" value="1"></div><div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger delMode">✕</button></div></div>');
+        checkSources();
+    }
+    if(e.target.classList.contains('delMode')){var c=e.target.closest('.modes-container');if(c.querySelectorAll('.mode-row').length>1)e.target.closest('.mode-row').remove();checkSources();}
+    ['delMcu','delSensor','delActuator'].forEach(function(cls){if(e.target.classList.contains(cls)){var rc=cls.replace('del','').toLowerCase()+'-row';if(document.querySelectorAll('.'+rc).length>1)e.target.closest('.'+rc).remove();checkSources();}});
+});
+
+document.addEventListener('change',function(e){
+    if(e.target.classList.contains('mcu-model-select')){
+        var wrapper=e.target.closest('.mcu-name-wrapper');
+        syncMcuName(wrapper);
+        if(e.target.value==='__other__'){
+            var custom=wrapper.querySelector('.mcu-custom-name');
+            if(custom)custom.focus();
+        }
+    }
+});
+
+document.addEventListener('input',function(e){
+    if(e.target.classList.contains('mcu-custom-name')){
+        syncMcuName(e.target.closest('.mcu-name-wrapper'));
+    }
+});
+
+function addComponent(cat,cid,rc){
+    var n=counters[cat],box=document.getElementById(cid),first=box.querySelector('.'+rc),clone=first.cloneNode(true);
+    clone.innerHTML=clone.innerHTML.replace(new RegExp(cat+'_name_0','g'),cat+'_name_'+n).replace(new RegExp(cat+'_voltage_0','g'),cat+'_voltage_'+n).replace(new RegExp(cat+'_nominal_0','g'),cat+'_nominal_'+n).replace(new RegExp(cat+'_cores_0','g'),cat+'_cores_'+n).replace(new RegExp(cat+'_fmin_0','g'),cat+'_fmin_'+n).replace(new RegExp(cat+'_fmax_0','g'),cat+'_fmax_'+n).replace(new RegExp(cat+'_fused_0','g'),cat+'_fused_'+n).replace(new RegExp(cat+'_datasheet_0','g'),cat+'_datasheet_'+n).replace(new RegExp(cat+'_seppower_0','g'),cat+'_seppower_'+n).replace(new RegExp(cat+'_mode_name_0_','g'),cat+'_mode_name_'+n+'_').replace(new RegExp(cat+'_mode_current_0_','g'),cat+'_mode_current_'+n+'_').replace(new RegExp(cat+'_mode_duration_0_','g'),cat+'_mode_duration_'+n+'_').replace(new RegExp(cat+'_mode_count_0_','g'),cat+'_mode_count_'+n+'_');
+    var mc=clone.querySelector('.modes-container');if(mc)mc.dataset.compIdx=n;
+    clone.querySelectorAll('input').forEach(function(el){if(el.type==='file')el.value='';else if(el.type==='checkbox')el.checked=false;else el.value='';});
+    clone.querySelectorAll('select').forEach(function(el){el.selectedIndex=0;});
+    clone.querySelectorAll('.mcu-custom-name').forEach(function(el){el.classList.add('d-none');el.required=false;});
+    box.appendChild(clone);
+    initializeMcuSelectors(clone);
+    counters[cat]++;
+    checkSources();
+}
+
+document.getElementById('addMcu').addEventListener('click',function(){addComponent('mcu','mcuContainer','mcu-row');});
+document.getElementById('addSensor').addEventListener('click',function(){addComponent('sensor','sensorContainer','sensor-row');});
+document.getElementById('addActuator').addEventListener('click',function(){addComponent('actuator','actuatorContainer','actuator-row');});
+document.addEventListener('input',checkSources);
+document.addEventListener('change',checkSources);
+document.addEventListener('DOMContentLoaded',function(){initializeMcuSelectors(document);checkSources();});
+initializeMcuSelectors(document);
+checkSources();
+</script>
+{% endblock %}

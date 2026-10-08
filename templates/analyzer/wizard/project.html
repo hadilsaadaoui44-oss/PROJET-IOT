@@ -1,0 +1,8 @@
+{% extends "analyzer/wizard/base.html" %}
+{% block wizard_content %}
+<h2>Projet et position</h2><p class="wizard-help">Ces informations identifient votre étude et permettent d’interroger PVGIS avec les coordonnées correctes.</p>
+<form method="post">{% csrf_token %}{{ form.non_field_errors }}
+<div class="row g-3 mt-1">
+{% for field in form %}<div class="{% if field.name == 'description' %}col-12{% else %}col-md-6{% endif %}"><label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+</div><div class="wizard-actions"><a class="btn btn-outline-secondary" href="{% url 'workflow_intro' %}">Précédent</a><button class="btn btn-primary" type="submit">Continuer vers le MCU</button></div></form>
+{% endblock %}

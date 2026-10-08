@@ -1,0 +1,271 @@
+{% extends "analyzer/base.html" %}
+
+{% block title %}Comment fonctionne l’analyse — AIDE-IoT{% endblock %}
+
+{% block content %}
+
+<style>
+.intro-wrap{
+    max-width:1120px;
+    margin:0 auto;
+    padding:48px 0 72px
+}
+
+.intro-hero{
+    text-align:center;
+    max-width:780px;
+    margin:0 auto 42px
+}
+
+.intro-hero h1{
+    font-weight:800;
+    letter-spacing:-.04em
+}
+
+.intro-hero p{
+    color:#64748b;
+    font-size:1.05rem;
+    line-height:1.75
+}
+
+.info-pair,
+.timeline{
+    display:grid;
+    gap:18px
+}
+
+.info-pair{
+    grid-template-columns:1fr 1fr;
+    margin-bottom:48px
+}
+
+.info-card,
+.flow-card{
+    border:1px solid #e2e8f0;
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 12px 35px rgba(15,23,42,.06)
+}
+
+.info-card{
+    padding:24px
+}
+
+.info-card h2{
+    font-size:1rem;
+    font-weight:800
+}
+
+.info-card p{
+    margin:8px 0 0;
+    color:#64748b;
+    font-size:.86rem;
+    line-height:1.65
+}
+
+.timeline{
+    grid-template-columns:repeat(4,1fr)
+}
+
+.flow-card{
+    position:relative;
+    padding:24px
+}
+
+.flow-no{
+    display:inline-grid;
+    width:34px;
+    height:34px;
+    place-items:center;
+    border-radius:10px;
+    background:#eff6ff;
+    color:#2563eb;
+    font-weight:800
+}
+
+.flow-card h3{
+    margin:18px 0 8px;
+    font-size:1rem;
+    font-weight:800
+}
+
+.flow-card p{
+    margin:0;
+    color:#64748b;
+    font-size:.8rem;
+    line-height:1.6
+}
+
+.intro-action{
+    text-align:center;
+    margin-top:38px
+}
+
+.intro-action .btn{
+    padding:.85rem 1.5rem;
+    font-weight:700
+}
+
+@media(max-width:1000px){
+    .timeline{
+        grid-template-columns:1fr 1fr
+    }
+}
+
+@media(max-width:650px){
+    .info-pair,
+    .timeline{
+        grid-template-columns:1fr
+    }
+}
+
+</style>
+
+
+<div class="intro-wrap">
+
+<header class="intro-hero">
+
+<span class="text-primary fw-bold small text-uppercase">
+Parcours guidé
+</span>
+
+<h1 class="mt-2">
+Comment préparer votre analyse énergétique
+</h1>
+
+<p>
+AIDE-IoT transforme la description de votre dispositif,
+ses composants et son programme embarqué en un rapport
+d’ingénierie énergétique vérifiable.
+</p>
+
+</header>
+
+
+<section class="info-pair">
+
+<article class="info-card">
+
+<h2>
+Modes de fonctionnement
+</h2>
+
+<p>
+Indiquez les courants, durées et répétitions connus.
+Vos valeurs restent prioritaires dans tous les calculs énergétiques.
+</p>
+
+</article>
+
+
+<article class="info-card">
+
+<h2>
+Code source et datasheets
+</h2>
+
+<p>
+Le firmware aide à reconnaître les états actifs et les phases
+de basse consommation. Les fiches techniques complètent uniquement
+les valeurs absentes.
+</p>
+
+</article>
+
+</section>
+
+
+
+<section class="timeline">
+
+
+<article class="flow-card">
+<span class="flow-no">1</span>
+<h3>Projet et position</h3>
+<p>
+Décrivez le projet et sa localisation pour obtenir les données solaires adaptées.
+</p>
+</article>
+
+
+<article class="flow-card">
+<span class="flow-no">2</span>
+<h3>Microcontrôleur</h3>
+<p>
+Ajoutez le MCU, sa tension et ses modes actifs, veille ou Stop.
+</p>
+</article>
+
+
+<article class="flow-card">
+<span class="flow-no">3</span>
+<h3>Périphériques</h3>
+<p>
+Déclarez les capteurs et les communications avec leurs cycles réels.
+</p>
+</article>
+
+
+<article class="flow-card">
+<span class="flow-no">4</span>
+<h3>Actionneurs</h3>
+<p>
+Ajoutez moteurs, relais, éclairage et autres charges commandées.
+</p>
+</article>
+
+
+<article class="flow-card">
+<span class="flow-no">5</span>
+<h3>Programme</h3>
+<p>
+Collez ou importez le firmware afin d’identifier le comportement énergétique.
+</p>
+</article>
+
+
+<article class="flow-card">
+<span class="flow-no">6</span>
+<h3>Batterie et panneaux solaires</h3>
+<p>
+Précisez l’autonomie et les contraintes de la batterie,
+puis choisissez la technologie, la surface et le budget du panneau solaire.
+</p>
+</article>
+
+
+<article class="flow-card">
+<span class="flow-no">7</span>
+<h3>Vérification et lancement</h3>
+<p>
+Contrôlez le résumé du projet puis lancez l’analyse complète.
+</p>
+</article>
+
+
+</section>
+
+
+<div class="intro-action">
+
+{% if user.is_authenticated %}
+
+<a class="btn btn-primary" href="{% url 'wizard_project' %}">
+Commencer l’analyse
+</a>
+
+{% else %}
+
+<a class="btn btn-primary" href="{% url 'login' %}?next={% url 'wizard_project' %}">
+Se connecter pour commencer
+</a>
+
+{% endif %}
+
+</div>
+
+
+</div>
+
+{% endblock %}
